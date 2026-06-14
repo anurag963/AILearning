@@ -1,0 +1,49 @@
+pipeline {
+    agent any
+
+    parameters {
+        choice(name: 'ENV', choices: ['dev', 'qa', 'staging', 'prod'], description: 'Target environment')
+        string(name: 'RETRY_COUNT', defaultValue: '2', description: 'Max retries for flaky tests')
+        string(name: 'THREAD_COUNT', defaultValue: '4', description: 'TestNG parallel thread count')
+    }
+
+    tools {
+        jdk 'jdk21'
+    }
+
+    stages {
+        stage('Build') {
+            steps {
+                sh './gradlew clean compileJava compileTestJava'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh "./gradlew test -Denv=${params.ENV} -Dretry.count=${params.RETRY_COUNT} -Dthread.count=${params.THREAD_COUNT}"
+            }
+        }
+
+        stage('Sonar') {
+            steps {
+                withSonarQubeEnv('sonarqube') {
+                    sh './gradlew jacocoTestReport sonar -Dsonar.projectKey=api-test-framework'
+                }
+            }
+        }
+
+        stage('Allure Report') {
+            steps {
+                sh './gradlew allureReport'
+            }
+        }
+    }
+
+    post {
+        always {
+            junit testResults: 'build/test-results/test/*.xml', allowEmptyResults: true
+            archiveArtifacts artifacts: 'build/reports/allure-report/**', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'build/logs/**', allowEmptyArchive: true
+        }
+    }
+}

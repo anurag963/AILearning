@@ -1,0 +1,14 @@
+services:
+  api-tests:
+    build: .
+    image: api-test-framework:latest
+    container_name: api-test-framework
+    command: ["clean", "test", "-Denv=dev", "-Dretry.count=2", "-Dthread.count=4"]
+    volumes:
+      - ./build/reports:/workspace/build/reports
+      - ./build/test-results:/workspace/build/test-results
+      - ./build/logs:/workspace/build/logs
+      - gradle-cache:/root/.gradle
+
+volumes:
+  gradle-cache:

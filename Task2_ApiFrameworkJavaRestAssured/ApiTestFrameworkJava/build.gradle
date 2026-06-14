@@ -1,0 +1,108 @@
+plugins {
+    id 'java'
+    id 'io.qameta.allure' version '2.12.0'
+    id 'jacoco'
+    id 'org.sonarqube' version '5.1.0.4882'
+}
+
+group = 'com.framework'
+version = '1.0.0'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    restAssuredVersion = '5.5.0'
+    testngVersion = '7.10.2'
+    jacksonVersion = '2.17.2'
+    lombokVersion = '1.18.34'
+    log4jVersion = '2.23.1'
+    ownerVersion = '1.0.12'
+    javaFakerVersion = '1.0.2'
+    assertjVersion = '3.26.3'
+    allureVersion = '2.29.0'
+}
+
+dependencies {
+    // HTTP / Assertions
+    implementation "io.rest-assured:rest-assured:${restAssuredVersion}"
+    implementation "io.rest-assured:json-schema-validator:${restAssuredVersion}"
+
+    // Test Runner
+    implementation "org.testng:testng:${testngVersion}"
+
+    // Reporting
+    implementation "io.qameta.allure:allure-testng:${allureVersion}"
+    implementation "io.qameta.allure:allure-rest-assured:${allureVersion}"
+
+    // Logging
+    implementation "org.apache.logging.log4j:log4j-core:${log4jVersion}"
+    implementation "org.apache.logging.log4j:log4j-slf4j2-impl:${log4jVersion}"
+
+    // Serialization
+    implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
+
+    // Boilerplate
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
+    testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+    // Config
+    implementation "org.aeonbits.owner:owner:${ownerVersion}"
+
+    // Test Data
+    implementation "com.github.javafaker:javafaker:${javaFakerVersion}"
+
+    // Soft Assertions
+    implementation "org.assertj:assertj-core:${assertjVersion}"
+}
+
+test {
+    useTestNG() {
+        suites 'testng.xml'
+    }
+    systemProperty 'env', System.getProperty('env', 'dev')
+    systemProperty 'retry.count', System.getProperty('retry.count', '2')
+    systemProperty 'thread.count', System.getProperty('thread.count', '4')
+    outputs.upToDateWhen { false }
+}
+
+allure {
+    version.set(allureVersion)
+    adapter {
+        frameworks {
+            testng
+        }
+    }
+}
+
+jacoco {
+    toolVersion = '0.8.12'
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+}
+
+sonar {
+    properties {
+        property 'sonar.projectKey', 'api-test-framework'
+        property 'sonar.sources', 'src/main'
+        property 'sonar.tests', 'src/test'
+        property 'sonar.java.binaries', 'build/classes'
+        property 'sonar.coverage.jacoco.xmlReportPaths', "${buildDir}/reports/jacoco/test/jacocoTestReport.xml"
+    }
+}
