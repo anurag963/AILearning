@@ -1,0 +1,200 @@
+{
+  "name": "Test case Creator",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -224,
+        -144
+      ],
+      "id": "04e18d65-2cb3-4193-8116-710035d779a6",
+      "name": "When chat message received",
+      "webhookId": "644ea280-32eb-4b7e-ad56-6ace9cfa5688"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -304,
+        32
+      ],
+      "id": "13c9eb96-7d20-4673-9778-8b5352554ec7",
+      "name": "Schedule Trigger",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a Senior QA Test Architect with 15+ years of experience in Manual Testing, API Testing, UI Testing, Integration Testing, Regression Testing, and Test Automation.\n\nYour primary responsibility is to create high-quality test cases from Jira requirements and store them in Google Sheets.\n\nWORKFLOW:\n\n1. When the user provides a Jira Issue ID:\n   - Use the Jira tool to retrieve the complete issue details.\n   - Read:\n     - Summary\n     - Description\n     - Acceptance Criteria\n     - Comments\n     - Attachments (if available)\n     - Linked Issues/Subtasks\n\n2. Analyze the requirement thoroughly.\n\n3. Generate comprehensive test cases covering:\n   - Positive scenarios\n   - Negative scenarios\n   - Boundary value scenarios\n   - Validation scenarios\n   - Error handling\n   - Security validations\n   - Usability validations\n   - Integration scenarios\n   - Data validation scenarios\n\n4. Create test cases with the following columns:\n\n   Test Case ID\n   Requirement ID\n   Test Scenario\n   Test Case Description\n   Preconditions\n   Test Steps\n   Test Data\n   Expected Result\n   Priority\n   Test Type\n\n5. Priority Rules:\n   - Critical\n   - High\n   - Medium\n   - Low\n\n6. Test Type Values:\n   - Functional\n   - Negative\n   - Boundary\n   - UI\n   - API\n   - Security\n   - Integration\n   - Regression\n\n7. Generate detailed test steps.\n   Never create one-line test cases.\n\n8. Before writing to Google Sheets:\n   - Check if a sheet already exists for the Jira Issue ID.\n   - If not, create one.\n   - Append all generated test cases.\n\n9. Output format:\nOutput should be in google sheet\n\n10. After writing to Google Sheets:\n   - Return total test cases created.\n   - Return sheet name.\n   - Provide a summary of covered scenarios.\n\nQUALITY RULES:\n\n- Do not miss edge cases.\n- Do not generate duplicate test cases.\n- Ensure full requirement coverage.\n- Generate minimum 15 test cases for simple stories.\n- Generate 30+ test cases for medium complexity stories.\n- Generate 50+ test cases for complex features.\n- Follow ISTQB best practices.\n\nFill the results in google sheet attached."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -32,
+        -144
+      ],
+      "id": "58216ab8-c1e2-4ff5-a717-0d24488512ac",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "qwen/qwen3.6-27b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        48
+      ],
+      "id": "7737d0e5-26cd-4509-932d-7d2bdf3e4be4",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "EuXvM6JRKzIFGECv",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "issueKey": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Issue_Key', ``, 'string') }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.jiraTool",
+      "typeVersion": 1,
+      "position": [
+        272,
+        32
+      ],
+      "id": "5cd645ec-f0ba-47dc-878e-2001781f7996",
+      "name": "Get an issue in Jira Software",
+      "credentials": {
+        "jiraSoftwareCloudApi": {
+          "id": "L0sIgoM2AC3JyyYl",
+          "name": "Jira SW Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "documentId": {
+          "__rl": true,
+          "value": "1pXXkWLiklwn4V8WmU8YJH4AUkHzlPs8qy58Yea7I36k",
+          "mode": "list",
+          "cachedResultName": "AI TestCases",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pXXkWLiklwn4V8WmU8YJH4AUkHzlPs8qy58Yea7I36k/edit?usp=drivesdk"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        144,
+        96
+      ],
+      "id": "17aca98d-efab-4d76-a620-177d0c86f143",
+      "name": "Create sheet in Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "PxS5wWElTrspylY4",
+          "name": "Google Sheets OAuth2 API"
+        }
+      },
+      "notes": "fill data in sheet"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get an issue in Jira Software": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        []
+      ]
+    },
+    "Create sheet in Google Sheets": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "411c9708-f1e8-4cfc-a862-8a9ce08cbf84",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "22b0be55347747add1dec3f7cfd1d8a742fa60a79ebc0e091449c2664c33d753"
+  },
+  "nodeGroups": [],
+  "id": "Vhk8V1Xu6OOo9CGi",
+  "tags": []
+}

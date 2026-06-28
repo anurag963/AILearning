@@ -1,0 +1,162 @@
+{
+  "name": "AI_QA_Jira_Ticker_Creator",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Hi there! 👋\nMy name is QA Buddy. How can I assist you today?",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -224,
+        -48
+      ],
+      "id": "f16f8b9c-e7d3-4fae-9caf-ce9da39fb5c8",
+      "name": "When chat message received",
+      "webhookId": "21013a3d-7062-48eb-8dd8-25cd7cf96463"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a QA automation engineer with 15 years of experience. You will get the jira ticket details in chat. Your task is to create jira ticket with proper steps to reproduce and proper instructions like jira. Use the jira tool attached."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -16,
+        -48
+      ],
+      "id": "08220066-d700-4005-9b99-7d081aba9070",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "qwen/qwen3-32b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        160
+      ],
+      "id": "3c14237c-c129-49d0-a2d4-d385b0f79a16",
+      "name": "Qwen",
+      "credentials": {
+        "groqApi": {
+          "id": "EuXvM6JRKzIFGECv",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "project": {
+          "__rl": true,
+          "value": "10034",
+          "mode": "list",
+          "cachedResultName": "AILearning"
+        },
+        "issueType": {
+          "__rl": true,
+          "value": "10052",
+          "mode": "list",
+          "cachedResultName": "Bug"
+        },
+        "summary": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Summary', ``, 'string') }}",
+        "additionalFields": {
+          "description": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Description', ``, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.jiraTool",
+      "typeVersion": 1,
+      "position": [
+        144,
+        160
+      ],
+      "id": "6eb088ec-6145-4268-82ff-019fbde3d5c6",
+      "name": "Create an issue in Jira AiLearning",
+      "credentials": {
+        "jiraSoftwareCloudApi": {
+          "id": "L0sIgoM2AC3JyyYl",
+          "name": "Jira SW Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        -16,
+        160
+      ],
+      "id": "fe4e01ad-ae37-4bfc-b575-5e0021993c33",
+      "name": "Simple Memory"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qwen": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an issue in Jira AiLearning": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "c2e1cee2-49b0-4b9d-a47c-ac8ecfdee15b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "22b0be55347747add1dec3f7cfd1d8a742fa60a79ebc0e091449c2664c33d753"
+  },
+  "nodeGroups": [],
+  "id": "EjzaLVH1eaE70TUS",
+  "tags": []
+}

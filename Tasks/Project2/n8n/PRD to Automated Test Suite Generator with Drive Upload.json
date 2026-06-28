@@ -1,0 +1,497 @@
+{
+  "name": "PRD to Automated Test Suite Generator with Drive Upload",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "QA Documentation Generator",
+        "formDescription": "Upload your Product Requirement Document (PDF) to automatically generate test plan, test cases, and Playwright scripts.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Product Requirement Document",
+              "fieldType": "file",
+              "fieldName": "prd_file",
+              "multipleFiles": false,
+              "acceptFileTypes": ".pdf",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ac597aa2-4bbb-41ff-9194-c74d8faafecd",
+      "name": "Upload PRD Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        240,
+        448
+      ],
+      "webhookId": "1fa9673b-0adf-4659-8524-a7bd2a21a855"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "prd_file",
+        "options": {
+          "joinPages": true
+        }
+      },
+      "id": "233a268b-5049-46b0-8c73-96b8ca8a2542",
+      "name": "Extract PRD Text",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        464,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following Product Requirement Document and create a comprehensive test plan in markdown format.\n\nInclude:\n- Test objectives\n- Scope and out of scope items\n- Test strategy\n- Test environment requirements\n- Risk assessment\n- Test deliverables\n\nPRD Content:\n{{ $json.text }}",
+        "options": {
+          "systemMessage": "You are a QA expert who creates detailed test plans. Output your test plan in clean markdown format with proper headings and sections."
+        }
+      },
+      "id": "189403f8-4bd4-4825-b5d2-d8970921d739",
+      "name": "Generate Test Plan",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        688,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Based on the following test plan, create detailed manual test cases.\n\nTest Plan:\n{{ $(\"Generate Test Plan\").item.json.output }}\n\nCreate comprehensive test cases covering all scenarios mentioned in the test plan. Each test case should include: test_id, test_name, preconditions, test_steps, expected_result, priority, and test_type.",
+        "options": {
+          "systemMessage": "You are a Senior QA Engineer.\n\nGenerate detailed test cases from the supplied Test Plan.\n\nRequirements:\n\n- Cover all functional scenarios\n- Cover positive scenarios\n- Cover negative scenarios\n- Cover validation scenarios\n- Cover boundary conditions\n- Cover security scenarios where applicable\n\nIMPORTANT:\n\nThe FIRST line of the output MUST be exactly:\n\nTest Case ID,Module,Title,Precondition,Steps,Test Data,Expected Result,Priority,Type\n\nAfter the header row, generate all test cases in RFC4180 compliant CSV format.\n\nExample:\n\nTest Case ID,Module,Title,Precondition,Steps,Test Data,Expected Result,Priority,Type\nTC001,Login,Valid Login,User exists,\"1. Open Login Page 2. Enter credentials 3. Click Login\",\"user@test.com / Password123\",\"User logs in successfully\",High,Positive\n\nRules:\n\n- Output ONLY CSV\n- Do NOT use markdown\n- Do NOT use code blocks\n- Do NOT include explanations\n- Do NOT include introductory text\n- Do NOT include <think>"
+        }
+      },
+      "id": "b7bdb6fb-d094-4ab7-8973-e962eb0b65e4",
+      "name": "Generate Test Cases",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1104,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "test_cases_csv",
+              "name": "test_cases_csv",
+              "value": "=Test ID,Test Name,Preconditions,Test Steps,Expected Result,Priority,Test Type\n{{ $json.output.test_cases.map(tc => `\"${tc.test_id}\",\"${tc.test_name}\",\"${tc.preconditions}\",\"${tc.test_steps.replace(/\\n/g, \" \")}\",\"${tc.expected_result}\",\"${tc.priority}\",\"${tc.test_type}\"`).join(\"\\n\") }}",
+              "type": "string"
+            },
+            {
+              "id": "test_cases_filename",
+              "name": "test_cases_filename",
+              "value": "test_cases.csv",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e500ed82-f92e-4e17-bfb7-f06a4219019f",
+      "name": "Format Test Cases as CSV",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1488,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Based on the following manual test cases, generate Playwright automation scripts in TypeScript.\n\nTest Cases:\n{{ JSON.stringify($(\"Generate Test Cases\").item.json.output.test_cases, null, 2) }}\n\nCreate complete, runnable Playwright test scripts with proper page object patterns, assertions, and best practices. Include setup and teardown code.",
+        "options": {
+          "systemMessage": "You are an automation engineer expert in Playwright. Generate production-ready TypeScript test automation code with proper structure, comments, and error handling. Output the code in markdown format with code blocks."
+        }
+      },
+      "id": "a6d8db48-9802-4226-bad8-759822f5b211",
+      "name": "Generate Playwright Scripts",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1552,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "name": "=Create test_plan1.md",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1JXXbOD2_dxCOnKtCItESOsQiRej2_Gyp",
+          "mode": "list",
+          "cachedResultName": "AITests",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1JXXbOD2_dxCOnKtCItESOsQiRej2_Gyp"
+        },
+        "options": {}
+      },
+      "id": "3d1292cd-da23-43d8-a715-7db582f658a1",
+      "name": "Upload to Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1664,
+        912
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "MN4srQ8Rk9kfkwZE",
+          "name": "Google Drive OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "output",
+        "options": {
+          "fileName": "=test_plan1.md"
+        }
+      },
+      "id": "cea0cf45-2c19-49e7-8eae-81299ab4efbd",
+      "name": "Convert to File",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1216,
+        896
+      ]
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "id": "35baef5a-fc89-4a4d-8659-b029fe3bebb0",
+      "name": "Groq Model - Test Plan",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        656,
+        688
+      ],
+      "credentials": {
+        "groqApi": {
+          "id": "EuXvM6JRKzIFGECv",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "id": "7542d526-6903-4b53-a327-7d36c5ee2aa0",
+      "name": "Groq Model - Test Cases",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        512
+      ],
+      "credentials": {
+        "groqApi": {
+          "id": "EuXvM6JRKzIFGECv",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "id": "683220cb-1d79-404b-a131-309d71ee3637",
+      "name": "Groq Model - Playwright",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        640
+      ],
+      "credentials": {
+        "groqApi": {
+          "id": "EuXvM6JRKzIFGECv",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "=data",
+        "name": "=test_cases1.csv",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1JXXbOD2_dxCOnKtCItESOsQiRej2_Gyp",
+          "mode": "list",
+          "cachedResultName": "AITests",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1JXXbOD2_dxCOnKtCItESOsQiRej2_Gyp"
+        },
+        "options": {}
+      },
+      "id": "1db8259c-ef6b-4be1-bae9-850475d0cf13",
+      "name": "Upload to Google Drive1",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2016,
+        144
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "MN4srQ8Rk9kfkwZE",
+          "name": "Google Drive OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "=Create test_scripts1.md",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1JXXbOD2_dxCOnKtCItESOsQiRej2_Gyp",
+          "mode": "list",
+          "cachedResultName": "AITests",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1JXXbOD2_dxCOnKtCItESOsQiRej2_Gyp"
+        },
+        "options": {}
+      },
+      "id": "ed6cd494-a81f-4c1b-bf0d-931dc3b26ed5",
+      "name": "Upload to Google Drive2",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2176,
+        448
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "MN4srQ8Rk9kfkwZE",
+          "name": "Google Drive OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "output",
+        "options": {
+          "fileName": "=testCase.csv"
+        }
+      },
+      "id": "f324187c-8e46-4720-8197-bc6ec70f10be",
+      "name": "Convert to File1",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1680,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "output",
+        "options": {
+          "fileName": "=testScripts.md"
+        }
+      },
+      "id": "c8ad464f-4305-4ca5-8461-4039477b6ac3",
+      "name": "Convert to File2",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1904,
+        400
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Upload PRD Form": {
+      "main": [
+        [
+          {
+            "node": "Extract PRD Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract PRD Text": {
+      "main": [
+        [
+          {
+            "node": "Generate Test Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Test Plan": {
+      "main": [
+        [
+          {
+            "node": "Generate Test Cases",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Test Cases": {
+      "main": [
+        [
+          {
+            "node": "Generate Playwright Scripts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Convert to File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Test Cases as CSV": {
+      "main": [
+        []
+      ]
+    },
+    "Generate Playwright Scripts": {
+      "main": [
+        [
+          {
+            "node": "Convert to File2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Upload to Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Model - Test Plan": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Test Plan",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Model - Test Cases": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Test Cases",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Model - Playwright": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Playwright Scripts",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File1": {
+      "main": [
+        [
+          {
+            "node": "Upload to Google Drive1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File2": {
+      "main": [
+        [
+          {
+            "node": "Upload to Google Drive2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "88a92d5f-19c0-418a-9c53-1a307c47057a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "22b0be55347747add1dec3f7cfd1d8a742fa60a79ebc0e091449c2664c33d753"
+  },
+  "nodeGroups": [],
+  "id": "GY9Br8i77pPDkfmi",
+  "tags": []
+}

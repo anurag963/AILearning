@@ -1,0 +1,357 @@
+{
+  "name": "Jira to Google Sheets Test Case Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "options": {
+          "inputPlaceholder": "Paste your Jira issue URL here...",
+          "subtitle": "Provide a Jira issue link to generate test cases",
+          "title": "Jira Test Case Generator",
+          "responseMode": "streaming"
+        }
+      },
+      "id": "431a163d-6ad7-4623-b968-9128a8544bf7",
+      "name": "Chat Trigger",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        240,
+        304
+      ],
+      "webhookId": "2608dadc-8899-416a-bd0a-3e9fa6e8cdb2"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "issueKey": "AIL1-2",
+        "additionalFields": {
+          "expand": "renderedFields,changelog"
+        }
+      },
+      "id": "70f7437b-b202-424e-b0d6-5d22dbe999e4",
+      "name": "Fetch Jira Issue",
+      "type": "n8n-nodes-base.jira",
+      "typeVersion": 1,
+      "position": [
+        464,
+        304
+      ],
+      "credentials": {
+        "jiraSoftwareCloudApi": {
+          "id": "L0sIgoM2AC3JyyYl",
+          "name": "Jira SW Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate exactly 5 test cases for this Jira issue:\n\nIssue: {{ $json.key }} - {{ $json.fields.summary }}\nDescription: {{ $json.fields.description }}\nType: {{ $json.fields.issuetype.name }}\nPriority: {{ $json.fields.priority.name }}\n\nCreate 5 test cases covering:\n1. Happy path scenario\n2. Invalid input scenario\n3. Edge case\n4. Boundary condition\n5. UI validation\n\nReturn a JSON object with a testCases array. Each test case must have:\n- id: Unique identifier (TC001, TC002, etc.)\n- title: Clear test case name\n- preconditions: What must be true before testing\n- steps: Numbered test steps (use actual newlines)\n- expectedResult: What should happen\n- priority: High, Medium, or Low\n- type: Functional, UI, Negative, etc.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a QA expert. Always return valid JSON matching the exact schema provided. Each test case must include all required fields: id, title, preconditions, steps, expectedResult, priority, and type.",
+          "maxIterations": 10
+        }
+      },
+      "id": "454cac7f-98c6-418f-a86d-94e013b9a3a9",
+      "name": "Generate Test Cases",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        720,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1pXXkWLiklwn4V8WmU8YJH4AUkHzlPs8qy58Yea7I36k",
+          "mode": "list",
+          "cachedResultName": "AI TestCases",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pXXkWLiklwn4V8WmU8YJH4AUkHzlPs8qy58Yea7I36k/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pXXkWLiklwn4V8WmU8YJH4AUkHzlPs8qy58Yea7I36k/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Test Case Id",
+              "displayName": "Test Case Id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Summary/Title",
+              "displayName": "Summary/Title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Preconditions",
+              "displayName": "Preconditions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Test Steps",
+              "displayName": "Test Steps",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Expected result",
+              "displayName": "Expected result",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Actual result",
+              "displayName": "Actual result",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Execution date",
+              "displayName": "Execution date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Comments",
+              "displayName": "Comments",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "8040edc1-a31b-48f8-9311-488567726c6b",
+      "name": "Write Test Cases to Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1408,
+        304
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "PxS5wWElTrspylY4",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "qwen/qwen3.6-27b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        688,
+        528
+      ],
+      "id": "84489bec-68ef-49bc-83b3-40b92cca30a4",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "EuXvM6JRKzIFGECv",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\"testCases\":[{\"id\":\"TC001\",\"title\":\"Verify username field accepts valid input\",\"preconditions\":\"User is on login page\",\"steps\":\"1. Navigate to login page\\n2. Enter valid username\\n3. Click on password field\",\"expectedResult\":\"Username is accepted and cursor moves to password field\",\"priority\":\"High\",\"type\":\"Functional\"},{\"id\":\"TC002\",\"title\":\"Verify login with valid credentials\",\"preconditions\":\"User has valid credentials\",\"steps\":\"1. Enter valid username\\n2. Enter valid password\\n3. Click Login button\",\"expectedResult\":\"User is logged in successfully\",\"priority\":\"High\",\"type\":\"Functional\"}]}",
+        "autoFix": true
+      },
+      "id": "3134b67f-7f78-4875-8556-d46b45e0280e",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        816,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract test cases from AI output\nconst testCases = $input.first().json.output.testCases || [];\n\n// Format each test case for Google Sheets\nconst formattedTestCases = testCases.map(tc => ({\n  json: {\n    'Test Case Id': tc.id || '',\n    'Summary/Title': tc.title || '',\n    'Preconditions': tc.preconditions || '',\n    'Test Steps': tc.steps || '',\n    'Expected result': tc.expectedResult || '',\n    'Actual result': '',\n    'Status': 'Not Executed',\n    'Execution date': '',\n    'Comments': `Priority: ${tc.priority || 'Medium'} | Type: ${tc.type || 'Functional'}`\n  }\n}));\n\nreturn formattedTestCases;"
+      },
+      "id": "d98271c0-de84-474b-a43c-7b1a2487a985",
+      "name": "Format For Sheets",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1184,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "model": "qwen/qwen3-32b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        896,
+        736
+      ],
+      "id": "c97a698b-0641-457e-9ea1-2df750a94b0a",
+      "name": "Groq Chat Model1",
+      "credentials": {
+        "groqApi": {
+          "id": "EuXvM6JRKzIFGECv",
+          "name": "Groq account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Chat Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Jira Issue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Jira Issue": {
+      "main": [
+        [
+          {
+            "node": "Generate Test Cases",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Test Cases": {
+      "main": [
+        [
+          {
+            "node": "Format For Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Test Cases",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Test Cases to Sheet": {
+      "main": [
+        []
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Generate Test Cases",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format For Sheets": {
+      "main": [
+        [
+          {
+            "node": "Write Test Cases to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "9949eebb-2ec6-432b-b7e8-1a20597ac082",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "22b0be55347747add1dec3f7cfd1d8a742fa60a79ebc0e091449c2664c33d753"
+  },
+  "nodeGroups": [],
+  "id": "Zz5VTBOKs3sSh2Bm",
+  "tags": []
+}
