@@ -4,8 +4,14 @@ from deepeval import assert_test
 from deepeval.metrics import AnswerRelevancyMetric
 
 
+# source .venv/bin/activate
+
 #   deepeval set-local-model --model openai/gpt-oss-120b \
 #       --base-url "https://api.groq.com/openai/v1" --format json --prompt-api-key
+# export LOCAL_MODEL_API_KEY="YOUR_GROQ_API_KEY"
+
+
+# deepeval test run 01_test_Answer_Relevancy.py   
 
 # steps to run the test:
 # run deepeval set-local-model --model openai/gpt-oss-120b --base-url "https://api.groq.com/openai/v1" --format json --prompt-api-key

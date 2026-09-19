@@ -8,3 +8,4 @@ __pycache__/
 *.env
 DeepEval/test/.deepeval/
 DeepEval/test/.deepeval/
+DeepEval/.deepeval
