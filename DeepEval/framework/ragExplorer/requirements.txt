@@ -1,0 +1,6 @@
+openai>=1.0
+python-dotenv
+starlette
+uvicorn
+numpy
+chromadb  # only for its bundled MiniLM embedding model

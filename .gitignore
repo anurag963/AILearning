@@ -9,3 +9,7 @@ __pycache__/
 DeepEval/test/.deepeval/
 DeepEval/test/.deepeval/
 DeepEval/.deepeval
+DeepEval/framework/Chatbot/.env.example
+DeepEval/framework/Chatbot/.env.example
+DeepEval/framework/DeepEvealFramework/dashboard/data/runs
+DeepEval/framework/DeepEvealFramework/tests/chatbot/.deepeval

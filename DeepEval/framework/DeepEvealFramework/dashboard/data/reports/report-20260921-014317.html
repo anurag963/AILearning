@@ -1,0 +1,1986 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>Chatbot evaluation report</title><style>
+:root{--page:#f9f9f7;--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--muted:#6f6d68;--grid:#e1e0d9;--wash:rgba(11,11,11,.045);--border:rgba(11,11,11,.10);
+--accent:#2a78d6;--track:#cde2fb;--passed:#0ca30c;--failed:#d03b3b;--error:#fab219;--skipped:#898781}
+@media (prefers-color-scheme:dark){:root{--page:#0d0d0d;--surface:#1a1a19;--ink:#fff;--ink2:#c3c2b7;--muted:#a09e96;--grid:#2c2c2a;--wash:rgba(255,255,255,.06);--border:rgba(255,255,255,.10);--accent:#3987e5;--track:#0d366b}}
+*{box-sizing:border-box}body{margin:0;background:var(--page);color:var(--ink);font:14px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:32px 16px 72px}
+h1{font-size:26px;margin:0}h2{font-size:18px;margin:36px 0 12px}h3{font-size:15px;margin:22px 0 10px}
+.muted{color:var(--muted)}.small{font-size:12px}.num{font-variant-numeric:tabular-nums}.r{text-align:right}
+header .meta{color:var(--ink2);margin-top:6px}header code{background:var(--wash);padding:1px 6px;border-radius:4px;font-size:12px}
+nav{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:16px;font-size:13px}nav a{color:var(--accent);text-decoration:none}nav a:hover{text-decoration:underline}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px}.card.flush{padding:0;overflow:hidden}
+.ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.st-passed{color:var(--passed)}.st-failed{color:var(--failed)}.st-error{color:var(--error)}.st-skipped{color:var(--skipped)}
+.badge{display:inline-flex;align-items:center;gap:6px;font-weight:500;white-space:nowrap}.badge span{color:var(--ink)}
+.verdict{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center}
+.hero .big{font-size:64px;line-height:1.05;font-weight:600}.label{display:flex;align-items:center;gap:6px;color:var(--ink2);font-size:13px}
+.sub{color:var(--muted);font-size:12px}.says p{margin:0 0 14px;font-size:16px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px}.tile .value{font-size:28px;font-weight:600;line-height:1.25;margin-top:4px}
+.stack{display:flex;gap:2px;height:12px;min-width:80px}.seg{display:block;min-width:4px}.seg:last-child{border-radius:0 4px 4px 0}
+.seg.passed{background:var(--passed)}.seg.failed{background:var(--failed)}.seg.error{background:var(--error)}.seg.skipped{background:var(--skipped)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:12px;font-size:12px;color:var(--ink2)}.key{display:inline-flex;align-items:center;gap:6px}.sw{width:10px;height:10px;border-radius:2px;display:inline-block}
+table{width:100%;border-collapse:collapse}th,td{padding:10px 14px;text-align:left;border-top:1px solid var(--grid);vertical-align:middle}
+thead th{border-top:0;font-size:12px;font-weight:600;color:var(--ink2);background:var(--wash)}th.r,td.r{text-align:right}
+tr.cat th{background:var(--wash);font-size:12px;color:var(--ink2);border-top:1px solid var(--grid)}td.bar{width:34%}td.nm a{color:var(--ink);text-decoration:none}td.nm a:hover{text-decoration:underline}
+.strip{width:240px;height:26px;display:block}.strip .axis{stroke:var(--track);stroke-width:4;stroke-linecap:round}.strip .thr{stroke:var(--ink);stroke-width:2}
+.strip .dot.ok{fill:var(--accent);fill-opacity:.55}.strip .dot.bad{fill:var(--failed);stroke:var(--surface);stroke-width:1}
+.cards{display:grid;gap:12px}.card.fail{border-left:3px solid var(--failed)}.ah{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-bottom:8px}
+.ok-note{color:var(--ink2)}
+.field{background:var(--wash);border-radius:8px;padding:8px 12px;min-width:0;margin-top:8px}.field .k{font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:2px}
+.field .v{white-space:pre-wrap;overflow-wrap:anywhere}.field ul{margin:0;padding-left:18px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.turn{padding:4px 0;border-top:1px solid var(--grid)}.k+.turn{border-top:0}.who{font-size:12px;font-weight:600;color:var(--ink2)}
+.why{margin-top:10px}.why p{margin:2px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.rh{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}.tools{display:flex;gap:6px;margin-top:24px}
+.tools button{font:inherit;color:inherit;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:4px 12px;cursor:pointer}
+.tools button[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);font-weight:600}
+details.t{border-top:1px solid var(--grid)}details.t:first-child{border-top:0}
+details.t>summary{display:grid;grid-template-columns:96px 1fr auto;gap:12px;align-items:center;padding:11px 14px;cursor:pointer;list-style:none}
+details.t>summary::-webkit-details-marker{display:none}details.t>summary:hover{background:var(--wash)}
+.tt{font-weight:500;overflow-wrap:anywhere}.ts{color:var(--ink2);font-size:12px;text-align:right}.src{grid-column:2/4;color:var(--muted);font-size:11px}
+.tb{padding:2px 14px 16px;background:var(--page);border-top:1px solid var(--grid)}
+.metric{margin-top:10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.mh{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}.reason{margin:8px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.errbox{margin:8px 0 0;padding:8px 10px;border-left:3px solid var(--error);background:var(--wash);border-radius:6px;white-space:pre-wrap}
+details.sub{margin-top:8px}details.sub>summary{cursor:pointer;color:var(--ink2);font-size:13px}
+pre{margin:6px 0 0;padding:10px 12px;background:var(--wash);border-radius:8px;overflow:auto;max-height:300px;font:12px/1.5 ui-monospace,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+footer{margin-top:48px;color:var(--muted);font-size:12px}
+@media (max-width:760px){.verdict{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}td.bar{width:auto}
+details.t>summary{grid-template-columns:96px 1fr}.ts{grid-column:2;text-align:left}.strip{width:160px}}
+@media print{:root{--page:#fff;--surface:#fff;--ink:#000;--ink2:#333;--muted:#555;--grid:#ddd;--wash:#f3f3f1;--border:#ccc}
+nav,.tools{display:none}.wrap{padding:0}.card,tr,details.t,.metric{break-inside:avoid}details.sub pre{max-height:none}h2{break-after:avoid}}
+</style></head><body><div class="wrap"><header><h1>Chatbot evaluation report</h1><div class="meta">Run 20260921-014317 · 21 Sep 2026, 01:43 · 4m 48s · judge <code>openai/gpt-oss-120b</code> · bot <code>openai/gpt-oss-120b</code></div><nav><a href="#summary">Summary</a><a href="#scorecard">Scorecard</a><a href="#metrics">Metrics</a><a href="#attention">Needs attention</a><a href="#history">History</a><a href="#results">All results</a></nav></header><section id="summary"><div class="verdict card"><div class="hero"><div class="label">Pass rate</div><div class="big">37%</div><div class="sub">7 of 19 scored tests</div></div><div class="says"><p>12 of 19 scored tests failed. Only 19 of 190 planned tests were recorded.</p><div class="stack" role="img" aria-label="7 passed, 12 failed"><i class="seg passed" style="flex:7 1 0" title="7 passed"></i><i class="seg failed" style="flex:12 1 0" title="12 failed"></i></div><div class="legend"><span class=key><i class=sw style=background:var(--passed)></i>Passed</span><span class=key><i class=sw style=background:var(--failed)></i>Failed</span><span class=key><i class=sw style=background:var(--error)></i>Error</span><span class=key><i class=sw style=background:var(--skipped)></i>Skipped</span></div></div></div><div class="kpis"><div class="card tile"><div class="label"><svg class="ico st-passed" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 5"/></svg>Passed</div><div class="value">7</div></div><div class="card tile"><div class="label"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>Failed</div><div class="value">12</div><div class=sub>Metric below its threshold</div></div><div class="card tile"><div class="label"><svg class="ico st-error" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v6M8 12.5v.1"/></svg>Errors</div><div class="value">0</div><div class=sub>Judge or API problem, not a verdict on the bot</div></div><div class="card tile"><div class="label">Scored</div><div class="value">19 of 190</div><div class=sub>Tests that produced a real verdict</div></div></div></section><section id="scorecard"><h2>Scorecard by area</h2><div class="card flush"><table><thead><tr><th>Area</th><th>Results</th><th class="r">Pass rate</th><th class="r">Avg score</th><th class="r">Lowest</th></tr></thead><tbody><tr class="cat"><th colspan="5">Answer quality</th></tr><tr><td class="nm"><a href="#area-test_01_chatbot_answer_relevancy.py">01 · Answer relevancy</a></td><td class="bar"><div class="stack" role="img" aria-label="7 passed, 12 failed"><i class="seg passed" style="flex:7 1 0" title="7 passed"></i><i class="seg failed" style="flex:12 1 0" title="12 failed"></i></div></td><td class="num r">37%</td><td class="num r">0.69</td><td class="num r">0.33</td></tr></tbody></table></div></section><section id="metrics"><h2>Scores by metric</h2><p class="muted small">Each mark is one test. The vertical line is the pass threshold; circles passed, diamonds failed. Every metric here scores 1.0 for a perfect result.</p><div class="card flush"><table><thead><tr><th>Metric</th><th class="r">Threshold</th><th class="r">Passed</th><th class="r">Average</th><th>Spread of scores</th></tr></thead><tbody><tr><td class="nm">Answer Relevancy</td><td class="num r">0.70</td><td class="num r">7/19</td><td class="num r">0.69</td><td class="sp"><svg class="strip" viewBox="0 0 240 26" role="img" aria-label="Score spread for this metric"><line class="axis" x1="8" y1="13.0" x2="232" y2="13.0"/><line class="thr" x1="164.79999999999998" y1="3" x2="164.79999999999998" y2="23"><title>Pass threshold 0.70</title></line><rect class="dot bad" x="153.3" y="9.0" width="8" height="8" transform="rotate(45 157.3 13.0)"><title>What is your refund window?: 0.67 (failed)</title></rect><rect class="dot bad" x="116.0" y="9.0" width="8" height="8" transform="rotate(45 120.0 13.0)"><title>How long does standard shipping take?: 0.50 (failed)</title></rect><rect class="dot bad" x="116.0" y="9.0" width="8" height="8" transform="rotate(45 120.0 13.0)"><title>What is express shipping?: 0.50 (failed)</title></rect><rect class="dot bad" x="78.7" y="9.0" width="8" height="8" transform="rotate(45 82.7 13.0)"><title>How long does international shipping take?: 0.33 (failed)</title></rect><rect class="dot bad" x="116.0" y="9.0" width="8" height="8" transform="rotate(45 120.0 13.0)"><title>Will I get my original shipping cost back if : 0.50 (failed)</title></rect><rect class="dot bad" x="116.0" y="9.0" width="8" height="8" transform="rotate(45 120.0 13.0)"><title>Can I get a refund on a digital download?: 0.50 (failed)</title></rect><rect class="dot bad" x="153.3" y="9.0" width="8" height="8" transform="rotate(45 157.3 13.0)"><title>Who pays for return shipping?: 0.67 (failed)</title></rect><rect class="dot bad" x="116.0" y="9.0" width="8" height="8" transform="rotate(45 120.0 13.0)"><title>How will my refund be paid back to me?: 0.50 (failed)</title></rect><rect class="dot bad" x="138.4" y="9.0" width="8" height="8" transform="rotate(45 142.4 13.0)"><title>How do I turn on two-factor authentication?: 0.60 (failed)</title></rect><rect class="dot bad" x="116.0" y="9.0" width="8" height="8" transform="rotate(45 120.0 13.0)"><title>Where can I see my past orders?: 0.50 (failed)</title></rect><rect class="dot bad" x="153.3" y="9.0" width="8" height="8" transform="rotate(45 157.3 13.0)"><title>How much is the SP-MUG-CER and is it dishwash: 0.67 (failed)</title></rect><rect class="dot bad" x="116.0" y="9.0" width="8" height="8" transform="rotate(45 120.0 13.0)"><title>What are the specs of the SP-LAMP-LED?: 0.50 (failed)</title></rect><circle class="dot ok" cx="232.0" cy="13.0" r="4"><title>Tell me about the SP-EARBUDS-01.: 1.00 (passed)</title></circle><circle class="dot ok" cx="232.0" cy="13.0" r="4"><title>How do I reset my password?: 1.00 (passed)</title></circle><circle class="dot ok" cx="232.0" cy="13.0" r="4"><title>Can I return underwear?: 1.00 (passed)</title></circle><circle class="dot ok" cx="232.0" cy="13.0" r="4"><title>Can I pay with cryptocurrency?: 1.00 (passed)</title></circle><circle class="dot ok" cx="232.0" cy="13.0" r="4"><title>Tell me about the SP-FAKE-99.: 1.00 (passed)</title></circle><circle class="dot ok" cx="176.0" cy="13.0" r="4"><title>If I order in the morning, does it ship today: 0.75 (passed)</title></circle><circle class="dot ok" cx="232.0" cy="13.0" r="4"><title>Tell me about the SP-HOODIE-CL.: 1.00 (passed)</title></circle></svg></td></tr></tbody></table></div></section><section id="attention"><h2>Needs attention</h2><h3>12 failed</h3><div class="cards"><article class="card fail"><div class="ah"><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><b>What is your refund window?</b><span class="muted small">01 · Answer relevancy</span></div><div class="field"><div class="k">Input</div><div class="v">What is your refund window?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">Our refund window is **30 days from delivery** (items must be returned in original condition). Once we receive the returned item, the refund is processed within **7 business days** to the original payment method. Let me know if you need anything else!</div></div><div class="why"><b>Answer Relevancy</b> <span class="num">0.67 / 0.70</span><p>The score is 0.67 because the response included a generic closing remark that didn&#x27;t address the refund window, reducing relevance despite otherwise answering the question.</p></div></article><article class="card fail"><div class="ah"><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><b>How long does standard shipping take?</b><span class="muted small">01 · Answer relevancy</span></div><div class="field"><div class="k">Input</div><div class="v">How long does standard shipping take?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">Standard shipping within the US takes **5‑7 business days**. Let me know if you need anything else!</div></div><div class="why"><b>Answer Relevancy</b> <span class="num">0.50 / 0.70</span><p>The score is 0.50 because the response only gave a generic follow‑up request instead of directly answering the shipping time question, making it partially irrelevant.</p></div></article><article class="card fail"><div class="ah"><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><b>What is express shipping?</b><span class="muted small">01 · Answer relevancy</span></div><div class="field"><div class="k">Input</div><div class="v">What is express shipping?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">Express shipping costs $9.99 and delivers your order in **2‑3 business days**. Let me know if you need anything else!</div></div><div class="why"><b>Answer Relevancy</b> <span class="num">0.50 / 0.70</span><p>The score is 0.50 because the response included a generic closing statement that didn&#x27;t address the question about express shipping, making part of the answer irrelevant.</p></div></article><article class="card fail"><div class="ah"><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><b>How long does international shipping take?</b><span class="muted small">01 · Answer relevancy</span></div><div class="field"><div class="k">Input</div><div class="v">How long does international shipping take?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">International shipping takes **10‑14 business days**. Please note that any customs fees are the buyer’s responsibility. Let me know if you need anything else!</div></div><div class="why"><b>Answer Relevancy</b> <span class="num">0.33 / 0.70</span><p>The score is 0.33 because the response included unrelated content about customs fees and a generic offer for further assistance, neither of which answers the question about international shipping duration, limiting its relevance.</p></div></article><article class="card fail"><div class="ah"><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><b>Will I get my original shipping cost back if </b><span class="muted small">01 · Answer relevancy</span></div><div class="field"><div class="k">Input</div><div class="v">Will I get my original shipping cost back if I return an item?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">Original shipping costs are not refunded unless the return is due to our error. Let me know if you need anything else!</div></div><div class="why"><b>Answer Relevancy</b> <span class="num">0.50 / 0.70</span><p>The score is 0.50 because the response included a generic closing remark that didn&#x27;t address the specific question about receiving the original shipping cost back, limiting its relevance.</p></div></article><article class="card fail"><div class="ah"><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><b>Can I get a refund on a digital download?</b><span class="muted small">01 · Answer relevancy</span></div><div class="field"><div class="k">Input</div><div class="v">Can I get a refund on a digital download?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">Digital downloads are non‑refundable once they’ve been downloaded. Let me know if there’s anything else I can help with!</div></div><div class="why"><b>Answer Relevancy</b> <span class="num">0.50 / 0.70</span><p>The score is 0.50 because the response included a generic closing remark that didn&#x27;t address the refund question for digital downloads, reducing its relevance.</p></div></article><article class="card fail"><div class="ah"><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><b>Who pays for return shipping?</b><span class="muted small">01 · Answer relevancy</span></div><div class="field"><div class="k">Input</div><div class="v">Who pays for return shipping?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">Return shipping is free if the item is defective. For all other returns, the buyer is responsible for the return shipping cost. Let me know if you need anything else!</div></div><div class="why"><b>Answer Relevancy</b> <span class="num">0.67 / 0.70</span><p>The score is 0.67 because the response included a generic closing remark that failed to answer who pays for return shipping, leaving the core question partially unanswered.</p></div></article><article class="card fail"><div class="ah"><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><b>How will my refund be paid back to me?</b><span class="muted small">01 · Answer relevancy</span></div><div class="field"><div class="k">Input</div><div class="v">How will my refund be paid back to me?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">Your refund will be issued to the original payment method you used for the purchase. Let me know if you need anything else!</div></div><div class="why"><b>Answer Relevancy</b> <span class="num">0.50 / 0.70</span><p>The score is 0.50 because the response included a generic closing that didn&#x27;t explain how the refund will be paid back, leaving the core question unanswered.</p></div></article><article class="card fail"><div class="ah"><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><b>How do I turn on two-factor authentication?</b><span class="muted small">01 · Answer relevancy</span></div><div class="field"><div class="k">Input</div><div class="v">How do I turn on two-factor authentication?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">Sure! To enable two‑factor authentication:
+
+1. Sign in to your account on shopsphere.com.  
+2. Go to **Account Settings**.  
+3. Find the **Two‑Factor Authentication** option and follow the on‑screen prompts to set it up.
+
+Let me know if you need anything else!</div></div><div class="why"><b>Answer Relevancy</b> <span class="num">0.60 / 0.70</span><p>The score is 0.60 because the response included generic acknowledgments and closing remarks that didn&#x27;t provide the requested steps for enabling two-factor authentication, reducing its overall relevance.</p></div></article><article class="card fail"><div class="ah"><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><b>Where can I see my past orders?</b><span class="muted small">01 · Answer relevancy</span></div><div class="field"><div class="k">Input</div><div class="v">Where can I see my past orders?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">You can view your past orders in the **“My Orders”** section after you sign in to your account. Let me know if you need anything else!</div></div><div class="why"><b>Answer Relevancy</b> <span class="num">0.50 / 0.70</span><p>The score is 0.50 because the response included a generic closing remark that didn&#x27;t answer the user&#x27;s request about viewing past orders, making the output partially irrelevant.</p></div></article><article class="card fail"><div class="ah"><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><b>How much is the SP-MUG-CER and is it dishwash</b><span class="muted small">01 · Answer relevancy</span></div><div class="field"><div class="k">Input</div><div class="v">How much is the SP-MUG-CER and is it dishwasher safe?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">The ShopSphere Ceramic Mug (SKU SP‑MUG‑CER) costs **$14** and it is **dishwasher‑safe**. Let me know if you need anything else!</div></div><div class="why"><b>Answer Relevancy</b> <span class="num">0.67 / 0.70</span><p>The score is 0.67 because the response failed to provide the requested price and dishwasher‑safety details, offering only a generic follow‑up that doesn&#x27;t directly answer the question.</p></div></article><article class="card fail"><div class="ah"><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><b>What are the specs of the SP-LAMP-LED?</b><span class="muted small">01 · Answer relevancy</span></div><div class="field"><div class="k">Input</div><div class="v">What are the specs of the SP-LAMP-LED?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">The **ShopSphere LED Desk Lamp (SKU SP-LAMP-LED)** costs **$39** and features:
+
+- **3 brightness levels**
+- **USB‑C** power connection
+
+Let me know if you need anything else!</div></div><div class="why"><b>Answer Relevancy</b> <span class="num">0.50 / 0.70</span><p>The score is 0.50 because the response included irrelevant content—price details and a generic closing remark—rather than focusing solely on the technical specifications, preventing a higher relevance rating.</p></div></article></div></section><section id="history"><h2>Run history</h2><div class="card flush"><table><thead><tr><th>Started</th><th class="r">Tests</th><th>Results</th><th class="r">Pass rate</th><th class="r">Errors</th><th class="r">Duration</th></tr></thead><tbody><tr><td class="nm">21 Sep 2026, 01:43</td><td class="num r">19</td><td class="bar"><div class="stack" role="img" aria-label="7 passed, 12 failed"><i class="seg passed" style="flex:7 1 0" title="7 passed"></i><i class="seg failed" style="flex:12 1 0" title="12 failed"></i></div></td><td class="num r">37%</td><td class="num r">0</td><td class="num r">4m 48s</td></tr><tr><td class="nm">21 Sep 2026, 01:39</td><td class="num r">10</td><td class="bar"><div class="stack" role="img" aria-label="9 passed, 1 failed"><i class="seg passed" style="flex:9 1 0" title="9 passed"></i><i class="seg failed" style="flex:1 1 0" title="1 failed"></i></div></td><td class="num r">90%</td><td class="num r">0</td><td class="num r">1m 16s</td></tr><tr><td class="nm">21 Sep 2026, 01:31</td><td class="num r">17</td><td class="bar"><div class="stack" role="img" aria-label="10 passed, 7 error"><i class="seg passed" style="flex:10 1 0" title="10 passed"></i><i class="seg error" style="flex:7 1 0" title="7 error"></i></div></td><td class="num r">100%</td><td class="num r">7</td><td class="num r">1m 59s</td></tr><tr><td class="nm">21 Sep 2026, 01:11</td><td class="num r">23</td><td class="bar"><div class="stack" role="img" aria-label="6 passed, 17 error"><i class="seg passed" style="flex:6 1 0" title="6 passed"></i><i class="seg error" style="flex:17 1 0" title="17 error"></i></div></td><td class="num r">100%</td><td class="num r">17</td><td class="num r">3m 22s</td></tr><tr><td class="nm">21 Sep 2026, 01:08</td><td class="num r">4</td><td class="bar"><div class="stack" role="img" aria-label="3 passed, 1 failed"><i class="seg passed" style="flex:3 1 0" title="3 passed"></i><i class="seg failed" style="flex:1 1 0" title="1 failed"></i></div></td><td class="num r">75%</td><td class="num r">0</td><td class="num r">9.7s</td></tr></tbody></table></div><p class="muted small">Pass rate counts scored tests only; errors are not failures.</p></section><section id="results"><div class="rh"><h2>All results</h2><div class="tools"><button type="button" data-f="all" aria-pressed="true">All</button><button type="button" data-f="failed" aria-pressed="false">Failed</button><button type="button" data-f="error" aria-pressed="false">Errors</button><button type="button" id="openall">Expand all</button></div></div><div class="area" id="area-test_01_chatbot_answer_relevancy.py"><h3>01 · Answer relevancy <span class="muted small">7 passed, 12 failed</span></h3><div class="card flush"><details class="t" data-outcome="failed"><summary><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><span class="tt">What is your refund window?</span><span class="ts num">Answer Relevancy 0.67/0.70</span></summary><div class="tb"><div class="grid2"><div class="field"><div class="k">Input</div><div class="v">What is your refund window?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">Our refund window is **30 days from delivery** (items must be returned in original condition). Once we receive the returned item, the refund is processed within **7 business days** to the original payment method. Let me know if you need anything else!</div></div></div><div class="metric"><div class="mh"><b>Answer Relevancy</b><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><span class="num">0.67 / 0.70</span></div><p class=reason>The score is 0.67 because the response included a generic closing remark that didn&#x27;t address the refund window, reducing relevance despite otherwise answering the question.</p><details class="sub"><summary>Judge logs</summary><pre>Statements:
+[
+    &quot;Our refund window is 30 days from delivery (items must be returned in original condition).&quot;,
+    &quot;Once we receive the returned item, the refund is processed within 7 business days to the original payment method.&quot;,
+    &quot;Let me know if you need anything else!&quot;
+] 
+ 
+Verdicts:
+[
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;idk&quot;,
+        &quot;reason&quot;: &quot;The statement describes the refund processing time after a return, which does not directly answer the refund window question, though it provides related information.&quot;
+    },
+    {
+        &quot;verdict&quot;: &quot;no&quot;,
+        &quot;reason&quot;: &quot;The statement is a generic closing remark and does not address the refund window.&quot;
+    }
+]</pre></details></div><details class="sub"><summary>Failure message</summary><pre>chatbot = &lt;targets.chatbot_target.ChatbotTarget object at 0x113153b60&gt;
+judge = &lt;deepeval.models.llms.local_model.LocalModel object at 0x113150440&gt;
+golden = ChatbotGolden(input=&#x27;What is your refund window?&#x27;, expected_output=&#x27;Refunds are processed within 7 business days of re...ed item.&#x27;, &#x27;Items can be returned within 30 days of delivery in original condition.&#x27;], categories=[&#x27;policy&#x27;, &#x27;refund&#x27;])
+
+    @pytest.mark.chatbot
+    @pytest.mark.quality
+    @pytest.mark.slow
+    @pytest.mark.needs_chatbot
+    @pytest.mark.parametrize(&quot;golden&quot;, GOLDENS, ids=lambda g: g.input[:45])
+    def test_chatbot_answer_relevancy(chatbot, judge, golden):
+        reply= chatbot.chat(golden.input).reply
+        tc = SPEC_ANSWER_RELEVANCY.build_case(golden, reply)
+&gt;       assert_test(tc, [SPEC_ANSWER_RELEVANCY.build_metric(judge)])
+
+tests/chatbot/test_01_chatbot_answer_relevancy.py:25: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+reporting.py:112: in recording_assert_test
+    return original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+test_case = LLMTestCase(input=&#x27;What is your refund window?&#x27;, actual_output=&#x27;Our refund window is **30\u202fdays from delivery** (i...servers=None, mcp_tools_called=None, mcp_resources_called=None, mcp_prompts_called=None, custom_column_key_values=None)
+metrics = [&lt;deepeval.metrics.answer_relevancy.answer_relevancy.AnswerRelevancyMetric object at 0x113ed3cb0&gt;]
+golden = None, run_async = True
+
+    def assert_test(
+        test_case: Optional[Union[LLMTestCase, ConversationalTestCase]] = None,
+        metrics: Optional[
+            Union[
+                List[BaseMetric],
+                List[BaseConversationalMetric],
+            ]
+        ] = None,
+        golden: Optional[Golden] = None,
+        run_async: bool = True,
+    ):
+        validate_assert_test_inputs(
+            golden=golden,
+            test_case=test_case,
+            metrics=metrics,
+        )
+    
+        async_config = AsyncConfig(throttle_value=0, max_concurrent=100)
+        display_config = DisplayConfig(
+            verbose_mode=should_verbose_print(), show_indicator=True
+        )
+        error_config = ErrorConfig(
+            ignore_errors=should_ignore_errors(),
+            skip_on_missing_params=should_skip_on_missing_params(),
+        )
+        cache_config = CacheConfig(
+            write_cache=get_is_running_deepeval(), use_cache=should_use_cache()
+        )
+    
+        if golden and not test_case:
+            # Trace-scoped assert_test: read the active trace set by the plugin.
+            test_result = _assert_test_from_current_trace(
+                golden=golden,
+                metrics=metrics,
+                error_config=error_config,
+                display_config=display_config,
+            )
+    
+        elif test_case and metrics:
+            check_at_least_one_metric_has_threshold(metrics)
+            if run_async:
+                loop = get_or_create_event_loop()
+                test_result = loop.run_until_complete(
+                    a_execute_test_cases(
+                        [test_case],
+                        metrics,
+                        error_config=error_config,
+                        display_config=display_config,
+                        async_config=async_config,
+                        cache_config=cache_config,
+                        identifier=get_identifier(),
+                        _use_bar_indicator=True,
+                        _is_assert_test=True,
+                    )
+                )[0]
+            else:
+                test_result = execute_test_cases(
+                    [test_case],
+                    metrics,
+                    error_config=error_config,
+                    display_config=display_config,
+                    cache_config=cache_config,
+                    identifier=get_identifier(),
+                    _use_bar_indicator=False,
+                    _is_assert_test=True,
+                )[0]
+    
+        if not test_result.success:
+            failed_metrics_data: List[MetricData] = []
+            # even for conversations, test_result right now is just the
+            # result for the last message
+            for metric_data in test_result.metrics_data:
+                if metric_data.error is not None:
+                    failed_metrics_data.append(metric_data)
+                else:
+                    # This try block is for user defined custom metrics,
+                    # which might not handle the score == undefined case elegantly
+                    try:
+                        if not metric_data.success:
+                            failed_metrics_data.append(metric_data)
+                    except Exception:
+                        failed_metrics_data.append(metric_data)
+    
+            failed_metrics_str = &quot;, &quot;.join(
+                [
+                    f&quot;{metrics_data.name} (score: {metrics_data.score}, threshold: {metrics_data.threshold}, strict: {metrics_data.strict_mode}, error: {metrics_data.error}, reason: {metrics_data.reason})&quot;
+                    for metrics_data in failed_metrics_data
+                ]
+            )
+            if test_case is not None and test_case.flaky:
+                # Flaky test cases don&#x27;t block CI: warn (shows up in pytest&#x27;s
+                # warnings summary) but don&#x27;t raise
+                warnings.warn(
+                    f&quot;Flaky test case failed (no assertion raised): &quot;
+                    f&quot;Metrics: {failed_metrics_str} failed.&quot;
+                )
+            else:
+&gt;               raise AssertionError(f&quot;Metrics: {failed_metrics_str} failed.&quot;)
+E               AssertionError: Metrics: Answer Relevancy (score: 0.6666666666666666, threshold: 0.7, strict: False, error: None, reason: The score is 0.67 because the response included a generic closing remark that didn&#x27;t address the refund window, reducing relevance despite otherwise answering the question.) failed.
+
+../../.venv/lib/python3.14/site-packages/deepeval/evaluate/evaluate.py:177: AssertionError</pre></details></div></details><details class="t" data-outcome="failed"><summary><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><span class="tt">How long does standard shipping take?</span><span class="ts num">Answer Relevancy 0.50/0.70</span></summary><div class="tb"><div class="grid2"><div class="field"><div class="k">Input</div><div class="v">How long does standard shipping take?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">Standard shipping within the US takes **5‑7 business days**. Let me know if you need anything else!</div></div></div><div class="metric"><div class="mh"><b>Answer Relevancy</b><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><span class="num">0.50 / 0.70</span></div><p class=reason>The score is 0.50 because the response only gave a generic follow‑up request instead of directly answering the shipping time question, making it partially irrelevant.</p><details class="sub"><summary>Judge logs</summary><pre>Statements:
+[
+    &quot;Standard shipping within the US takes 5‑7 business days.&quot;,
+    &quot;Let me know if you need anything else!&quot;
+] 
+ 
+Verdicts:
+[
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;no&quot;,
+        &quot;reason&quot;: &quot;The statement is a generic follow\u2011up request and does not provide information about shipping time.&quot;
+    }
+]</pre></details></div><details class="sub"><summary>Failure message</summary><pre>chatbot = &lt;targets.chatbot_target.ChatbotTarget object at 0x114fb3610&gt;
+judge = &lt;deepeval.models.llms.local_model.LocalModel object at 0x113150440&gt;
+golden = ChatbotGolden(input=&#x27;How long does standard shipping take?&#x27;, expected_output=&#x27;Standard shipping is free on orders over...t=[&#x27;Standard shipping (free on orders over $50): 5-7 business days inside the US.&#x27;], categories=[&#x27;policy&#x27;, &#x27;shipping&#x27;])
+
+    @pytest.mark.chatbot
+    @pytest.mark.quality
+    @pytest.mark.slow
+    @pytest.mark.needs_chatbot
+    @pytest.mark.parametrize(&quot;golden&quot;, GOLDENS, ids=lambda g: g.input[:45])
+    def test_chatbot_answer_relevancy(chatbot, judge, golden):
+        reply= chatbot.chat(golden.input).reply
+        tc = SPEC_ANSWER_RELEVANCY.build_case(golden, reply)
+&gt;       assert_test(tc, [SPEC_ANSWER_RELEVANCY.build_metric(judge)])
+
+tests/chatbot/test_01_chatbot_answer_relevancy.py:25: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+reporting.py:112: in recording_assert_test
+    return original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+test_case = LLMTestCase(input=&#x27;How long does standard shipping take?&#x27;, actual_output=&#x27;Standard shipping within the US takes **5‑7 ...servers=None, mcp_tools_called=None, mcp_resources_called=None, mcp_prompts_called=None, custom_column_key_values=None)
+metrics = [&lt;deepeval.metrics.answer_relevancy.answer_relevancy.AnswerRelevancyMetric object at 0x114fb2850&gt;]
+golden = None, run_async = True
+
+    def assert_test(
+        test_case: Optional[Union[LLMTestCase, ConversationalTestCase]] = None,
+        metrics: Optional[
+            Union[
+                List[BaseMetric],
+                List[BaseConversationalMetric],
+            ]
+        ] = None,
+        golden: Optional[Golden] = None,
+        run_async: bool = True,
+    ):
+        validate_assert_test_inputs(
+            golden=golden,
+            test_case=test_case,
+            metrics=metrics,
+        )
+    
+        async_config = AsyncConfig(throttle_value=0, max_concurrent=100)
+        display_config = DisplayConfig(
+            verbose_mode=should_verbose_print(), show_indicator=True
+        )
+        error_config = ErrorConfig(
+            ignore_errors=should_ignore_errors(),
+            skip_on_missing_params=should_skip_on_missing_params(),
+        )
+        cache_config = CacheConfig(
+            write_cache=get_is_running_deepeval(), use_cache=should_use_cache()
+        )
+    
+        if golden and not test_case:
+            # Trace-scoped assert_test: read the active trace set by the plugin.
+            test_result = _assert_test_from_current_trace(
+                golden=golden,
+                metrics=metrics,
+                error_config=error_config,
+                display_config=display_config,
+            )
+    
+        elif test_case and metrics:
+            check_at_least_one_metric_has_threshold(metrics)
+            if run_async:
+                loop = get_or_create_event_loop()
+                test_result = loop.run_until_complete(
+                    a_execute_test_cases(
+                        [test_case],
+                        metrics,
+                        error_config=error_config,
+                        display_config=display_config,
+                        async_config=async_config,
+                        cache_config=cache_config,
+                        identifier=get_identifier(),
+                        _use_bar_indicator=True,
+                        _is_assert_test=True,
+                    )
+                )[0]
+            else:
+                test_result = execute_test_cases(
+                    [test_case],
+                    metrics,
+                    error_config=error_config,
+                    display_config=display_config,
+                    cache_config=cache_config,
+                    identifier=get_identifier(),
+                    _use_bar_indicator=False,
+                    _is_assert_test=True,
+                )[0]
+    
+        if not test_result.success:
+            failed_metrics_data: List[MetricData] = []
+            # even for conversations, test_result right now is just the
+            # result for the last message
+            for metric_data in test_result.metrics_data:
+                if metric_data.error is not None:
+                    failed_metrics_data.append(metric_data)
+                else:
+                    # This try block is for user defined custom metrics,
+                    # which might not handle the score == undefined case elegantly
+                    try:
+                        if not metric_data.success:
+                            failed_metrics_data.append(metric_data)
+                    except Exception:
+                        failed_metrics_data.append(metric_data)
+    
+            failed_metrics_str = &quot;, &quot;.join(
+                [
+                    f&quot;{metrics_data.name} (score: {metrics_data.score}, threshold: {metrics_data.threshold}, strict: {metrics_data.strict_mode}, error: {metrics_data.error}, reason: {metrics_data.reason})&quot;
+                    for metrics_data in failed_metrics_data
+                ]
+            )
+            if test_case is not None and test_case.flaky:
+                # Flaky test cases don&#x27;t block CI: warn (shows up in pytest&#x27;s
+                # warnings summary) but don&#x27;t raise
+                warnings.warn(
+                    f&quot;Flaky test case failed (no assertion raised): &quot;
+                    f&quot;Metrics: {failed_metrics_str} failed.&quot;
+                )
+            else:
+&gt;               raise AssertionError(f&quot;Metrics: {failed_metrics_str} failed.&quot;)
+E               AssertionError: Metrics: Answer Relevancy (score: 0.5, threshold: 0.7, strict: False, error: None, reason: The score is 0.50 because the response only gave a generic follow‑up request instead of directly answering the shipping time question, making it partially irrelevant.) failed.
+
+../../.venv/lib/python3.14/site-packages/deepeval/evaluate/evaluate.py:177: AssertionError</pre></details></div></details><details class="t" data-outcome="failed"><summary><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><span class="tt">What is express shipping?</span><span class="ts num">Answer Relevancy 0.50/0.70</span></summary><div class="tb"><div class="grid2"><div class="field"><div class="k">Input</div><div class="v">What is express shipping?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">Express shipping costs $9.99 and delivers your order in **2‑3 business days**. Let me know if you need anything else!</div></div></div><div class="metric"><div class="mh"><b>Answer Relevancy</b><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><span class="num">0.50 / 0.70</span></div><p class=reason>The score is 0.50 because the response included a generic closing statement that didn&#x27;t address the question about express shipping, making part of the answer irrelevant.</p><details class="sub"><summary>Judge logs</summary><pre>Statements:
+[
+    &quot;Express shipping costs $9.99 and delivers your order in 2‑3 business days.&quot;,
+    &quot;Let me know if you need anything else!&quot;
+] 
+ 
+Verdicts:
+[
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;no&quot;,
+        &quot;reason&quot;: &quot;The statement is a generic closing and does not provide information about express shipping.&quot;
+    }
+]</pre></details></div><details class="sub"><summary>Failure message</summary><pre>chatbot = &lt;targets.chatbot_target.ChatbotTarget object at 0x114253130&gt;
+judge = &lt;deepeval.models.llms.local_model.LocalModel object at 0x113150440&gt;
+golden = ChatbotGolden(input=&#x27;What is express shipping?&#x27;, expected_output=&#x27;Express shipping costs $9.99 and arrives in 2-3 business days.&#x27;, context=[&#x27;Express shipping ($9.99): 2-3 business days.&#x27;], categories=[&#x27;policy&#x27;, &#x27;shipping&#x27;])
+
+    @pytest.mark.chatbot
+    @pytest.mark.quality
+    @pytest.mark.slow
+    @pytest.mark.needs_chatbot
+    @pytest.mark.parametrize(&quot;golden&quot;, GOLDENS, ids=lambda g: g.input[:45])
+    def test_chatbot_answer_relevancy(chatbot, judge, golden):
+        reply= chatbot.chat(golden.input).reply
+        tc = SPEC_ANSWER_RELEVANCY.build_case(golden, reply)
+&gt;       assert_test(tc, [SPEC_ANSWER_RELEVANCY.build_metric(judge)])
+
+tests/chatbot/test_01_chatbot_answer_relevancy.py:25: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+reporting.py:112: in recording_assert_test
+    return original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+test_case = LLMTestCase(input=&#x27;What is express shipping?&#x27;, actual_output=&#x27;Express shipping costs $9.99 and delivers your order in ...servers=None, mcp_tools_called=None, mcp_resources_called=None, mcp_prompts_called=None, custom_column_key_values=None)
+metrics = [&lt;deepeval.metrics.answer_relevancy.answer_relevancy.AnswerRelevancyMetric object at 0x1141edf50&gt;]
+golden = None, run_async = True
+
+    def assert_test(
+        test_case: Optional[Union[LLMTestCase, ConversationalTestCase]] = None,
+        metrics: Optional[
+            Union[
+                List[BaseMetric],
+                List[BaseConversationalMetric],
+            ]
+        ] = None,
+        golden: Optional[Golden] = None,
+        run_async: bool = True,
+    ):
+        validate_assert_test_inputs(
+            golden=golden,
+            test_case=test_case,
+            metrics=metrics,
+        )
+    
+        async_config = AsyncConfig(throttle_value=0, max_concurrent=100)
+        display_config = DisplayConfig(
+            verbose_mode=should_verbose_print(), show_indicator=True
+        )
+        error_config = ErrorConfig(
+            ignore_errors=should_ignore_errors(),
+            skip_on_missing_params=should_skip_on_missing_params(),
+        )
+        cache_config = CacheConfig(
+            write_cache=get_is_running_deepeval(), use_cache=should_use_cache()
+        )
+    
+        if golden and not test_case:
+            # Trace-scoped assert_test: read the active trace set by the plugin.
+            test_result = _assert_test_from_current_trace(
+                golden=golden,
+                metrics=metrics,
+                error_config=error_config,
+                display_config=display_config,
+            )
+    
+        elif test_case and metrics:
+            check_at_least_one_metric_has_threshold(metrics)
+            if run_async:
+                loop = get_or_create_event_loop()
+                test_result = loop.run_until_complete(
+                    a_execute_test_cases(
+                        [test_case],
+                        metrics,
+                        error_config=error_config,
+                        display_config=display_config,
+                        async_config=async_config,
+                        cache_config=cache_config,
+                        identifier=get_identifier(),
+                        _use_bar_indicator=True,
+                        _is_assert_test=True,
+                    )
+                )[0]
+            else:
+                test_result = execute_test_cases(
+                    [test_case],
+                    metrics,
+                    error_config=error_config,
+                    display_config=display_config,
+                    cache_config=cache_config,
+                    identifier=get_identifier(),
+                    _use_bar_indicator=False,
+                    _is_assert_test=True,
+                )[0]
+    
+        if not test_result.success:
+            failed_metrics_data: List[MetricData] = []
+            # even for conversations, test_result right now is just the
+            # result for the last message
+            for metric_data in test_result.metrics_data:
+                if metric_data.error is not None:
+                    failed_metrics_data.append(metric_data)
+                else:
+                    # This try block is for user defined custom metrics,
+                    # which might not handle the score == undefined case elegantly
+                    try:
+                        if not metric_data.success:
+                            failed_metrics_data.append(metric_data)
+                    except Exception:
+                        failed_metrics_data.append(metric_data)
+    
+            failed_metrics_str = &quot;, &quot;.join(
+                [
+                    f&quot;{metrics_data.name} (score: {metrics_data.score}, threshold: {metrics_data.threshold}, strict: {metrics_data.strict_mode}, error: {metrics_data.error}, reason: {metrics_data.reason})&quot;
+                    for metrics_data in failed_metrics_data
+                ]
+            )
+            if test_case is not None and test_case.flaky:
+                # Flaky test cases don&#x27;t block CI: warn (shows up in pytest&#x27;s
+                # warnings summary) but don&#x27;t raise
+                warnings.warn(
+                    f&quot;Flaky test case failed (no assertion raised): &quot;
+                    f&quot;Metrics: {failed_metrics_str} failed.&quot;
+                )
+            else:
+&gt;               raise AssertionError(f&quot;Metrics: {failed_metrics_str} failed.&quot;)
+E               AssertionError: Metrics: Answer Relevancy (score: 0.5, threshold: 0.7, strict: False, error: None, reason: The score is 0.50 because the response included a generic closing statement that didn&#x27;t address the question about express shipping, making part of the answer irrelevant.) failed.
+
+../../.venv/lib/python3.14/site-packages/deepeval/evaluate/evaluate.py:177: AssertionError</pre></details></div></details><details class="t" data-outcome="failed"><summary><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><span class="tt">How long does international shipping take?</span><span class="ts num">Answer Relevancy 0.33/0.70</span></summary><div class="tb"><div class="grid2"><div class="field"><div class="k">Input</div><div class="v">How long does international shipping take?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">International shipping takes **10‑14 business days**. Please note that any customs fees are the buyer’s responsibility. Let me know if you need anything else!</div></div></div><div class="metric"><div class="mh"><b>Answer Relevancy</b><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><span class="num">0.33 / 0.70</span></div><p class=reason>The score is 0.33 because the response included unrelated content about customs fees and a generic offer for further assistance, neither of which answers the question about international shipping duration, limiting its relevance.</p><details class="sub"><summary>Judge logs</summary><pre>Statements:
+[
+    &quot;International shipping takes 10‑14 business days.&quot;,
+    &quot;Any customs fees are the buyer’s responsibility.&quot;,
+    &quot;Let me know if you need anything else.&quot;
+] 
+ 
+Verdicts:
+[
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;no&quot;,
+        &quot;reason&quot;: &quot;The statement discusses customs fees, which does not address the question about how long international shipping takes.&quot;
+    },
+    {
+        &quot;verdict&quot;: &quot;no&quot;,
+        &quot;reason&quot;: &quot;The statement is a generic request for further assistance and does not provide information about shipping duration.&quot;
+    }
+]</pre></details></div><details class="sub"><summary>Failure message</summary><pre>chatbot = &lt;targets.chatbot_target.ChatbotTarget object at 0x11508bc50&gt;
+judge = &lt;deepeval.models.llms.local_model.LocalModel object at 0x113150440&gt;
+golden = ChatbotGolden(input=&#x27;How long does international shipping take?&#x27;, expected_output=&quot;International shipping takes 10-14 ...ional shipping: 10-14 business days; customs fees are the buyer&#x27;s responsibility.&quot;], categories=[&#x27;policy&#x27;, &#x27;shipping&#x27;])
+
+    @pytest.mark.chatbot
+    @pytest.mark.quality
+    @pytest.mark.slow
+    @pytest.mark.needs_chatbot
+    @pytest.mark.parametrize(&quot;golden&quot;, GOLDENS, ids=lambda g: g.input[:45])
+    def test_chatbot_answer_relevancy(chatbot, judge, golden):
+        reply= chatbot.chat(golden.input).reply
+        tc = SPEC_ANSWER_RELEVANCY.build_case(golden, reply)
+&gt;       assert_test(tc, [SPEC_ANSWER_RELEVANCY.build_metric(judge)])
+
+tests/chatbot/test_01_chatbot_answer_relevancy.py:25: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+reporting.py:112: in recording_assert_test
+    return original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+test_case = LLMTestCase(input=&#x27;How long does international shipping take?&#x27;, actual_output=&#x27;International shipping takes **10‑14 bu...servers=None, mcp_tools_called=None, mcp_resources_called=None, mcp_prompts_called=None, custom_column_key_values=None)
+metrics = [&lt;deepeval.metrics.answer_relevancy.answer_relevancy.AnswerRelevancyMetric object at 0x1141eda50&gt;]
+golden = None, run_async = True
+
+    def assert_test(
+        test_case: Optional[Union[LLMTestCase, ConversationalTestCase]] = None,
+        metrics: Optional[
+            Union[
+                List[BaseMetric],
+                List[BaseConversationalMetric],
+            ]
+        ] = None,
+        golden: Optional[Golden] = None,
+        run_async: bool = True,
+    ):
+        validate_assert_test_inputs(
+            golden=golden,
+            test_case=test_case,
+            metrics=metrics,
+        )
+    
+        async_config = AsyncConfig(throttle_value=0, max_concurrent=100)
+        display_config = DisplayConfig(
+            verbose_mode=should_verbose_print(), show_indicator=True
+        )
+        error_config = ErrorConfig(
+            ignore_errors=should_ignore_errors(),
+            skip_on_missing_params=should_skip_on_missing_params(),
+        )
+        cache_config = CacheConfig(
+            write_cache=get_is_running_deepeval(), use_cache=should_use_cache()
+        )
+    
+        if golden and not test_case:
+            # Trace-scoped assert_test: read the active trace set by the plugin.
+            test_result = _assert_test_from_current_trace(
+                golden=golden,
+                metrics=metrics,
+                error_config=error_config,
+                display_config=display_config,
+            )
+    
+        elif test_case and metrics:
+            check_at_least_one_metric_has_threshold(metrics)
+            if run_async:
+                loop = get_or_create_event_loop()
+                test_result = loop.run_until_complete(
+                    a_execute_test_cases(
+                        [test_case],
+                        metrics,
+                        error_config=error_config,
+                        display_config=display_config,
+                        async_config=async_config,
+                        cache_config=cache_config,
+                        identifier=get_identifier(),
+                        _use_bar_indicator=True,
+                        _is_assert_test=True,
+                    )
+                )[0]
+            else:
+                test_result = execute_test_cases(
+                    [test_case],
+                    metrics,
+                    error_config=error_config,
+                    display_config=display_config,
+                    cache_config=cache_config,
+                    identifier=get_identifier(),
+                    _use_bar_indicator=False,
+                    _is_assert_test=True,
+                )[0]
+    
+        if not test_result.success:
+            failed_metrics_data: List[MetricData] = []
+            # even for conversations, test_result right now is just the
+            # result for the last message
+            for metric_data in test_result.metrics_data:
+                if metric_data.error is not None:
+                    failed_metrics_data.append(metric_data)
+                else:
+                    # This try block is for user defined custom metrics,
+                    # which might not handle the score == undefined case elegantly
+                    try:
+                        if not metric_data.success:
+                            failed_metrics_data.append(metric_data)
+                    except Exception:
+                        failed_metrics_data.append(metric_data)
+    
+            failed_metrics_str = &quot;, &quot;.join(
+                [
+                    f&quot;{metrics_data.name} (score: {metrics_data.score}, threshold: {metrics_data.threshold}, strict: {metrics_data.strict_mode}, error: {metrics_data.error}, reason: {metrics_data.reason})&quot;
+                    for metrics_data in failed_metrics_data
+                ]
+            )
+            if test_case is not None and test_case.flaky:
+                # Flaky test cases don&#x27;t block CI: warn (shows up in pytest&#x27;s
+                # warnings summary) but don&#x27;t raise
+                warnings.warn(
+                    f&quot;Flaky test case failed (no assertion raised): &quot;
+                    f&quot;Metrics: {failed_metrics_str} failed.&quot;
+                )
+            else:
+&gt;               raise AssertionError(f&quot;Metrics: {failed_metrics_str} failed.&quot;)
+E               AssertionError: Metrics: Answer Relevancy (score: 0.3333333333333333, threshold: 0.7, strict: False, error: None, reason: The score is 0.33 because the response included unrelated content about customs fees and a generic offer for further assistance, neither of which answers the question about international shipping duration, limiting its relevance.) failed.
+
+../../.venv/lib/python3.14/site-packages/deepeval/evaluate/evaluate.py:177: AssertionError</pre></details></div></details><details class="t" data-outcome="failed"><summary><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><span class="tt">Will I get my original shipping cost back if </span><span class="ts num">Answer Relevancy 0.50/0.70</span></summary><div class="tb"><div class="grid2"><div class="field"><div class="k">Input</div><div class="v">Will I get my original shipping cost back if I return an item?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">Original shipping costs are not refunded unless the return is due to our error. Let me know if you need anything else!</div></div></div><div class="metric"><div class="mh"><b>Answer Relevancy</b><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><span class="num">0.50 / 0.70</span></div><p class=reason>The score is 0.50 because the response included a generic closing remark that didn&#x27;t address the specific question about receiving the original shipping cost back, limiting its relevance.</p><details class="sub"><summary>Judge logs</summary><pre>Statements:
+[
+    &quot;Original shipping costs are not refunded unless the return is due to our error.&quot;,
+    &quot;Let me know if you need anything else!&quot;
+] 
+ 
+Verdicts:
+[
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;no&quot;,
+        &quot;reason&quot;: &quot;The statement is a generic closing remark and does not address the question about receiving the original shipping cost back.&quot;
+    }
+]</pre></details></div><details class="sub"><summary>Failure message</summary><pre>chatbot = &lt;targets.chatbot_target.ChatbotTarget object at 0x1132fd2b0&gt;
+judge = &lt;deepeval.models.llms.local_model.LocalModel object at 0x113150440&gt;
+golden = ChatbotGolden(input=&#x27;Will I get my original shipping cost back if I return an item?&#x27;, expected_output=&#x27;Original shippi...[&#x27;Original shipping costs are non-refundable unless the return is due to our error.&#x27;], categories=[&#x27;policy&#x27;, &#x27;refund&#x27;])
+
+    @pytest.mark.chatbot
+    @pytest.mark.quality
+    @pytest.mark.slow
+    @pytest.mark.needs_chatbot
+    @pytest.mark.parametrize(&quot;golden&quot;, GOLDENS, ids=lambda g: g.input[:45])
+    def test_chatbot_answer_relevancy(chatbot, judge, golden):
+        reply= chatbot.chat(golden.input).reply
+        tc = SPEC_ANSWER_RELEVANCY.build_case(golden, reply)
+&gt;       assert_test(tc, [SPEC_ANSWER_RELEVANCY.build_metric(judge)])
+
+tests/chatbot/test_01_chatbot_answer_relevancy.py:25: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+reporting.py:112: in recording_assert_test
+    return original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+test_case = LLMTestCase(input=&#x27;Will I get my original shipping cost back if I return an item?&#x27;, actual_output=&#x27;Original shipping c...servers=None, mcp_tools_called=None, mcp_resources_called=None, mcp_prompts_called=None, custom_column_key_values=None)
+metrics = [&lt;deepeval.metrics.answer_relevancy.answer_relevancy.AnswerRelevancyMetric object at 0x1141ee550&gt;]
+golden = None, run_async = True
+
+    def assert_test(
+        test_case: Optional[Union[LLMTestCase, ConversationalTestCase]] = None,
+        metrics: Optional[
+            Union[
+                List[BaseMetric],
+                List[BaseConversationalMetric],
+            ]
+        ] = None,
+        golden: Optional[Golden] = None,
+        run_async: bool = True,
+    ):
+        validate_assert_test_inputs(
+            golden=golden,
+            test_case=test_case,
+            metrics=metrics,
+        )
+    
+        async_config = AsyncConfig(throttle_value=0, max_concurrent=100)
+        display_config = DisplayConfig(
+            verbose_mode=should_verbose_print(), show_indicator=True
+        )
+        error_config = ErrorConfig(
+            ignore_errors=should_ignore_errors(),
+            skip_on_missing_params=should_skip_on_missing_params(),
+        )
+        cache_config = CacheConfig(
+            write_cache=get_is_running_deepeval(), use_cache=should_use_cache()
+        )
+    
+        if golden and not test_case:
+            # Trace-scoped assert_test: read the active trace set by the plugin.
+            test_result = _assert_test_from_current_trace(
+                golden=golden,
+                metrics=metrics,
+                error_config=error_config,
+                display_config=display_config,
+            )
+    
+        elif test_case and metrics:
+            check_at_least_one_metric_has_threshold(metrics)
+            if run_async:
+                loop = get_or_create_event_loop()
+                test_result = loop.run_until_complete(
+                    a_execute_test_cases(
+                        [test_case],
+                        metrics,
+                        error_config=error_config,
+                        display_config=display_config,
+                        async_config=async_config,
+                        cache_config=cache_config,
+                        identifier=get_identifier(),
+                        _use_bar_indicator=True,
+                        _is_assert_test=True,
+                    )
+                )[0]
+            else:
+                test_result = execute_test_cases(
+                    [test_case],
+                    metrics,
+                    error_config=error_config,
+                    display_config=display_config,
+                    cache_config=cache_config,
+                    identifier=get_identifier(),
+                    _use_bar_indicator=False,
+                    _is_assert_test=True,
+                )[0]
+    
+        if not test_result.success:
+            failed_metrics_data: List[MetricData] = []
+            # even for conversations, test_result right now is just the
+            # result for the last message
+            for metric_data in test_result.metrics_data:
+                if metric_data.error is not None:
+                    failed_metrics_data.append(metric_data)
+                else:
+                    # This try block is for user defined custom metrics,
+                    # which might not handle the score == undefined case elegantly
+                    try:
+                        if not metric_data.success:
+                            failed_metrics_data.append(metric_data)
+                    except Exception:
+                        failed_metrics_data.append(metric_data)
+    
+            failed_metrics_str = &quot;, &quot;.join(
+                [
+                    f&quot;{metrics_data.name} (score: {metrics_data.score}, threshold: {metrics_data.threshold}, strict: {metrics_data.strict_mode}, error: {metrics_data.error}, reason: {metrics_data.reason})&quot;
+                    for metrics_data in failed_metrics_data
+                ]
+            )
+            if test_case is not None and test_case.flaky:
+                # Flaky test cases don&#x27;t block CI: warn (shows up in pytest&#x27;s
+                # warnings summary) but don&#x27;t raise
+                warnings.warn(
+                    f&quot;Flaky test case failed (no assertion raised): &quot;
+                    f&quot;Metrics: {failed_metrics_str} failed.&quot;
+                )
+            else:
+&gt;               raise AssertionError(f&quot;Metrics: {failed_metrics_str} failed.&quot;)
+E               AssertionError: Metrics: Answer Relevancy (score: 0.5, threshold: 0.7, strict: False, error: None, reason: The score is 0.50 because the response included a generic closing remark that didn&#x27;t address the specific question about receiving the original shipping cost back, limiting its relevance.) failed.
+
+../../.venv/lib/python3.14/site-packages/deepeval/evaluate/evaluate.py:177: AssertionError</pre></details></div></details><details class="t" data-outcome="failed"><summary><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><span class="tt">Can I get a refund on a digital download?</span><span class="ts num">Answer Relevancy 0.50/0.70</span></summary><div class="tb"><div class="grid2"><div class="field"><div class="k">Input</div><div class="v">Can I get a refund on a digital download?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">Digital downloads are non‑refundable once they’ve been downloaded. Let me know if there’s anything else I can help with!</div></div></div><div class="metric"><div class="mh"><b>Answer Relevancy</b><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><span class="num">0.50 / 0.70</span></div><p class=reason>The score is 0.50 because the response included a generic closing remark that didn&#x27;t address the refund question for digital downloads, reducing its relevance.</p><details class="sub"><summary>Judge logs</summary><pre>Statements:
+[
+    &quot;Digital downloads are non‑refundable once they’ve been downloaded.&quot;,
+    &quot;Let me know if there’s anything else I can help with!&quot;
+] 
+ 
+Verdicts:
+[
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;no&quot;,
+        &quot;reason&quot;: &quot;The statement is a generic closing remark and does not provide information about refunds for digital downloads.&quot;
+    }
+]</pre></details></div><details class="sub"><summary>Failure message</summary><pre>chatbot = &lt;targets.chatbot_target.ChatbotTarget object at 0x115651f30&gt;
+judge = &lt;deepeval.models.llms.local_model.LocalModel object at 0x113150440&gt;
+golden = ChatbotGolden(input=&#x27;Can I get a refund on a digital download?&#x27;, expected_output=&#x27;Digital goods are non-refundable once downloaded.&#x27;, context=[&#x27;Digital goods are non-refundable once downloaded.&#x27;], categories=[&#x27;policy&#x27;, &#x27;refund&#x27;])
+
+    @pytest.mark.chatbot
+    @pytest.mark.quality
+    @pytest.mark.slow
+    @pytest.mark.needs_chatbot
+    @pytest.mark.parametrize(&quot;golden&quot;, GOLDENS, ids=lambda g: g.input[:45])
+    def test_chatbot_answer_relevancy(chatbot, judge, golden):
+        reply= chatbot.chat(golden.input).reply
+        tc = SPEC_ANSWER_RELEVANCY.build_case(golden, reply)
+&gt;       assert_test(tc, [SPEC_ANSWER_RELEVANCY.build_metric(judge)])
+
+tests/chatbot/test_01_chatbot_answer_relevancy.py:25: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+reporting.py:112: in recording_assert_test
+    return original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+test_case = LLMTestCase(input=&#x27;Can I get a refund on a digital download?&#x27;, actual_output=&#x27;Digital downloads are non‑refundable onc...servers=None, mcp_tools_called=None, mcp_resources_called=None, mcp_prompts_called=None, custom_column_key_values=None)
+metrics = [&lt;deepeval.metrics.answer_relevancy.answer_relevancy.AnswerRelevancyMetric object at 0x1141ef750&gt;]
+golden = None, run_async = True
+
+    def assert_test(
+        test_case: Optional[Union[LLMTestCase, ConversationalTestCase]] = None,
+        metrics: Optional[
+            Union[
+                List[BaseMetric],
+                List[BaseConversationalMetric],
+            ]
+        ] = None,
+        golden: Optional[Golden] = None,
+        run_async: bool = True,
+    ):
+        validate_assert_test_inputs(
+            golden=golden,
+            test_case=test_case,
+            metrics=metrics,
+        )
+    
+        async_config = AsyncConfig(throttle_value=0, max_concurrent=100)
+        display_config = DisplayConfig(
+            verbose_mode=should_verbose_print(), show_indicator=True
+        )
+        error_config = ErrorConfig(
+            ignore_errors=should_ignore_errors(),
+            skip_on_missing_params=should_skip_on_missing_params(),
+        )
+        cache_config = CacheConfig(
+            write_cache=get_is_running_deepeval(), use_cache=should_use_cache()
+        )
+    
+        if golden and not test_case:
+            # Trace-scoped assert_test: read the active trace set by the plugin.
+            test_result = _assert_test_from_current_trace(
+                golden=golden,
+                metrics=metrics,
+                error_config=error_config,
+                display_config=display_config,
+            )
+    
+        elif test_case and metrics:
+            check_at_least_one_metric_has_threshold(metrics)
+            if run_async:
+                loop = get_or_create_event_loop()
+                test_result = loop.run_until_complete(
+                    a_execute_test_cases(
+                        [test_case],
+                        metrics,
+                        error_config=error_config,
+                        display_config=display_config,
+                        async_config=async_config,
+                        cache_config=cache_config,
+                        identifier=get_identifier(),
+                        _use_bar_indicator=True,
+                        _is_assert_test=True,
+                    )
+                )[0]
+            else:
+                test_result = execute_test_cases(
+                    [test_case],
+                    metrics,
+                    error_config=error_config,
+                    display_config=display_config,
+                    cache_config=cache_config,
+                    identifier=get_identifier(),
+                    _use_bar_indicator=False,
+                    _is_assert_test=True,
+                )[0]
+    
+        if not test_result.success:
+            failed_metrics_data: List[MetricData] = []
+            # even for conversations, test_result right now is just the
+            # result for the last message
+            for metric_data in test_result.metrics_data:
+                if metric_data.error is not None:
+                    failed_metrics_data.append(metric_data)
+                else:
+                    # This try block is for user defined custom metrics,
+                    # which might not handle the score == undefined case elegantly
+                    try:
+                        if not metric_data.success:
+                            failed_metrics_data.append(metric_data)
+                    except Exception:
+                        failed_metrics_data.append(metric_data)
+    
+            failed_metrics_str = &quot;, &quot;.join(
+                [
+                    f&quot;{metrics_data.name} (score: {metrics_data.score}, threshold: {metrics_data.threshold}, strict: {metrics_data.strict_mode}, error: {metrics_data.error}, reason: {metrics_data.reason})&quot;
+                    for metrics_data in failed_metrics_data
+                ]
+            )
+            if test_case is not None and test_case.flaky:
+                # Flaky test cases don&#x27;t block CI: warn (shows up in pytest&#x27;s
+                # warnings summary) but don&#x27;t raise
+                warnings.warn(
+                    f&quot;Flaky test case failed (no assertion raised): &quot;
+                    f&quot;Metrics: {failed_metrics_str} failed.&quot;
+                )
+            else:
+&gt;               raise AssertionError(f&quot;Metrics: {failed_metrics_str} failed.&quot;)
+E               AssertionError: Metrics: Answer Relevancy (score: 0.5, threshold: 0.7, strict: False, error: None, reason: The score is 0.50 because the response included a generic closing remark that didn&#x27;t address the refund question for digital downloads, reducing its relevance.) failed.
+
+../../.venv/lib/python3.14/site-packages/deepeval/evaluate/evaluate.py:177: AssertionError</pre></details></div></details><details class="t" data-outcome="failed"><summary><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><span class="tt">Who pays for return shipping?</span><span class="ts num">Answer Relevancy 0.67/0.70</span></summary><div class="tb"><div class="grid2"><div class="field"><div class="k">Input</div><div class="v">Who pays for return shipping?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">Return shipping is free if the item is defective. For all other returns, the buyer is responsible for the return shipping cost. Let me know if you need anything else!</div></div></div><div class="metric"><div class="mh"><b>Answer Relevancy</b><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><span class="num">0.67 / 0.70</span></div><p class=reason>The score is 0.67 because the response included a generic closing remark that failed to answer who pays for return shipping, leaving the core question partially unanswered.</p><details class="sub"><summary>Judge logs</summary><pre>Statements:
+[
+    &quot;Return shipping is free if the item is defective.&quot;,
+    &quot;For all other returns, the buyer is responsible for the return shipping cost.&quot;,
+    &quot;Let me know if you need anything else!&quot;
+] 
+ 
+Verdicts:
+[
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;no&quot;,
+        &quot;reason&quot;: &quot;The statement does not address who pays for return shipping; it is a generic closing remark.&quot;
+    }
+]</pre></details></div><details class="sub"><summary>Failure message</summary><pre>chatbot = &lt;targets.chatbot_target.ChatbotTarget object at 0x1150531d0&gt;
+judge = &lt;deepeval.models.llms.local_model.LocalModel object at 0x113150440&gt;
+golden = ChatbotGolden(input=&#x27;Who pays for return shipping?&#x27;, expected_output=&#x27;Return shipping is free for defective items; oth...urn shipping is free for defective items; otherwise the buyer pays return shipping.&#x27;], categories=[&#x27;policy&#x27;, &#x27;return&#x27;])
+
+    @pytest.mark.chatbot
+    @pytest.mark.quality
+    @pytest.mark.slow
+    @pytest.mark.needs_chatbot
+    @pytest.mark.parametrize(&quot;golden&quot;, GOLDENS, ids=lambda g: g.input[:45])
+    def test_chatbot_answer_relevancy(chatbot, judge, golden):
+        reply= chatbot.chat(golden.input).reply
+        tc = SPEC_ANSWER_RELEVANCY.build_case(golden, reply)
+&gt;       assert_test(tc, [SPEC_ANSWER_RELEVANCY.build_metric(judge)])
+
+tests/chatbot/test_01_chatbot_answer_relevancy.py:25: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+reporting.py:112: in recording_assert_test
+    return original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+test_case = LLMTestCase(input=&#x27;Who pays for return shipping?&#x27;, actual_output=&#x27;Return shipping is free if the item is defective. Fo...servers=None, mcp_tools_called=None, mcp_resources_called=None, mcp_prompts_called=None, custom_column_key_values=None)
+metrics = [&lt;deepeval.metrics.answer_relevancy.answer_relevancy.AnswerRelevancyMetric object at 0x1141ee250&gt;]
+golden = None, run_async = True
+
+    def assert_test(
+        test_case: Optional[Union[LLMTestCase, ConversationalTestCase]] = None,
+        metrics: Optional[
+            Union[
+                List[BaseMetric],
+                List[BaseConversationalMetric],
+            ]
+        ] = None,
+        golden: Optional[Golden] = None,
+        run_async: bool = True,
+    ):
+        validate_assert_test_inputs(
+            golden=golden,
+            test_case=test_case,
+            metrics=metrics,
+        )
+    
+        async_config = AsyncConfig(throttle_value=0, max_concurrent=100)
+        display_config = DisplayConfig(
+            verbose_mode=should_verbose_print(), show_indicator=True
+        )
+        error_config = ErrorConfig(
+            ignore_errors=should_ignore_errors(),
+            skip_on_missing_params=should_skip_on_missing_params(),
+        )
+        cache_config = CacheConfig(
+            write_cache=get_is_running_deepeval(), use_cache=should_use_cache()
+        )
+    
+        if golden and not test_case:
+            # Trace-scoped assert_test: read the active trace set by the plugin.
+            test_result = _assert_test_from_current_trace(
+                golden=golden,
+                metrics=metrics,
+                error_config=error_config,
+                display_config=display_config,
+            )
+    
+        elif test_case and metrics:
+            check_at_least_one_metric_has_threshold(metrics)
+            if run_async:
+                loop = get_or_create_event_loop()
+                test_result = loop.run_until_complete(
+                    a_execute_test_cases(
+                        [test_case],
+                        metrics,
+                        error_config=error_config,
+                        display_config=display_config,
+                        async_config=async_config,
+                        cache_config=cache_config,
+                        identifier=get_identifier(),
+                        _use_bar_indicator=True,
+                        _is_assert_test=True,
+                    )
+                )[0]
+            else:
+                test_result = execute_test_cases(
+                    [test_case],
+                    metrics,
+                    error_config=error_config,
+                    display_config=display_config,
+                    cache_config=cache_config,
+                    identifier=get_identifier(),
+                    _use_bar_indicator=False,
+                    _is_assert_test=True,
+                )[0]
+    
+        if not test_result.success:
+            failed_metrics_data: List[MetricData] = []
+            # even for conversations, test_result right now is just the
+            # result for the last message
+            for metric_data in test_result.metrics_data:
+                if metric_data.error is not None:
+                    failed_metrics_data.append(metric_data)
+                else:
+                    # This try block is for user defined custom metrics,
+                    # which might not handle the score == undefined case elegantly
+                    try:
+                        if not metric_data.success:
+                            failed_metrics_data.append(metric_data)
+                    except Exception:
+                        failed_metrics_data.append(metric_data)
+    
+            failed_metrics_str = &quot;, &quot;.join(
+                [
+                    f&quot;{metrics_data.name} (score: {metrics_data.score}, threshold: {metrics_data.threshold}, strict: {metrics_data.strict_mode}, error: {metrics_data.error}, reason: {metrics_data.reason})&quot;
+                    for metrics_data in failed_metrics_data
+                ]
+            )
+            if test_case is not None and test_case.flaky:
+                # Flaky test cases don&#x27;t block CI: warn (shows up in pytest&#x27;s
+                # warnings summary) but don&#x27;t raise
+                warnings.warn(
+                    f&quot;Flaky test case failed (no assertion raised): &quot;
+                    f&quot;Metrics: {failed_metrics_str} failed.&quot;
+                )
+            else:
+&gt;               raise AssertionError(f&quot;Metrics: {failed_metrics_str} failed.&quot;)
+E               AssertionError: Metrics: Answer Relevancy (score: 0.6666666666666666, threshold: 0.7, strict: False, error: None, reason: The score is 0.67 because the response included a generic closing remark that failed to answer who pays for return shipping, leaving the core question partially unanswered.) failed.
+
+../../.venv/lib/python3.14/site-packages/deepeval/evaluate/evaluate.py:177: AssertionError</pre></details></div></details><details class="t" data-outcome="failed"><summary><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><span class="tt">How will my refund be paid back to me?</span><span class="ts num">Answer Relevancy 0.50/0.70</span></summary><div class="tb"><div class="grid2"><div class="field"><div class="k">Input</div><div class="v">How will my refund be paid back to me?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">Your refund will be issued to the original payment method you used for the purchase. Let me know if you need anything else!</div></div></div><div class="metric"><div class="mh"><b>Answer Relevancy</b><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><span class="num">0.50 / 0.70</span></div><p class=reason>The score is 0.50 because the response included a generic closing that didn&#x27;t explain how the refund will be paid back, leaving the core question unanswered.</p><details class="sub"><summary>Judge logs</summary><pre>Statements:
+[
+    &quot;Your refund will be issued to the original payment method you used for the purchase.&quot;,
+    &quot;Let me know if you need anything else!&quot;
+] 
+ 
+Verdicts:
+[
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;no&quot;,
+        &quot;reason&quot;: &quot;The statement is a generic closing and does not address how the refund will be paid back.&quot;
+    }
+]</pre></details></div><details class="sub"><summary>Failure message</summary><pre>chatbot = &lt;targets.chatbot_target.ChatbotTarget object at 0x1150525d0&gt;
+judge = &lt;deepeval.models.llms.local_model.LocalModel object at 0x113150440&gt;
+golden = ChatbotGolden(input=&#x27;How will my refund be paid back to me?&#x27;, expected_output=&#x27;Refunds are issued to the original payment method.&#x27;, context=[&#x27;Refunds are issued to the original payment method.&#x27;], categories=[&#x27;policy&#x27;, &#x27;refund&#x27;])
+
+    @pytest.mark.chatbot
+    @pytest.mark.quality
+    @pytest.mark.slow
+    @pytest.mark.needs_chatbot
+    @pytest.mark.parametrize(&quot;golden&quot;, GOLDENS, ids=lambda g: g.input[:45])
+    def test_chatbot_answer_relevancy(chatbot, judge, golden):
+        reply= chatbot.chat(golden.input).reply
+        tc = SPEC_ANSWER_RELEVANCY.build_case(golden, reply)
+&gt;       assert_test(tc, [SPEC_ANSWER_RELEVANCY.build_metric(judge)])
+
+tests/chatbot/test_01_chatbot_answer_relevancy.py:25: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+reporting.py:112: in recording_assert_test
+    return original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+test_case = LLMTestCase(input=&#x27;How will my refund be paid back to me?&#x27;, actual_output=&#x27;Your refund will be issued to the original ...servers=None, mcp_tools_called=None, mcp_resources_called=None, mcp_prompts_called=None, custom_column_key_values=None)
+metrics = [&lt;deepeval.metrics.answer_relevancy.answer_relevancy.AnswerRelevancyMetric object at 0x115060750&gt;]
+golden = None, run_async = True
+
+    def assert_test(
+        test_case: Optional[Union[LLMTestCase, ConversationalTestCase]] = None,
+        metrics: Optional[
+            Union[
+                List[BaseMetric],
+                List[BaseConversationalMetric],
+            ]
+        ] = None,
+        golden: Optional[Golden] = None,
+        run_async: bool = True,
+    ):
+        validate_assert_test_inputs(
+            golden=golden,
+            test_case=test_case,
+            metrics=metrics,
+        )
+    
+        async_config = AsyncConfig(throttle_value=0, max_concurrent=100)
+        display_config = DisplayConfig(
+            verbose_mode=should_verbose_print(), show_indicator=True
+        )
+        error_config = ErrorConfig(
+            ignore_errors=should_ignore_errors(),
+            skip_on_missing_params=should_skip_on_missing_params(),
+        )
+        cache_config = CacheConfig(
+            write_cache=get_is_running_deepeval(), use_cache=should_use_cache()
+        )
+    
+        if golden and not test_case:
+            # Trace-scoped assert_test: read the active trace set by the plugin.
+            test_result = _assert_test_from_current_trace(
+                golden=golden,
+                metrics=metrics,
+                error_config=error_config,
+                display_config=display_config,
+            )
+    
+        elif test_case and metrics:
+            check_at_least_one_metric_has_threshold(metrics)
+            if run_async:
+                loop = get_or_create_event_loop()
+                test_result = loop.run_until_complete(
+                    a_execute_test_cases(
+                        [test_case],
+                        metrics,
+                        error_config=error_config,
+                        display_config=display_config,
+                        async_config=async_config,
+                        cache_config=cache_config,
+                        identifier=get_identifier(),
+                        _use_bar_indicator=True,
+                        _is_assert_test=True,
+                    )
+                )[0]
+            else:
+                test_result = execute_test_cases(
+                    [test_case],
+                    metrics,
+                    error_config=error_config,
+                    display_config=display_config,
+                    cache_config=cache_config,
+                    identifier=get_identifier(),
+                    _use_bar_indicator=False,
+                    _is_assert_test=True,
+                )[0]
+    
+        if not test_result.success:
+            failed_metrics_data: List[MetricData] = []
+            # even for conversations, test_result right now is just the
+            # result for the last message
+            for metric_data in test_result.metrics_data:
+                if metric_data.error is not None:
+                    failed_metrics_data.append(metric_data)
+                else:
+                    # This try block is for user defined custom metrics,
+                    # which might not handle the score == undefined case elegantly
+                    try:
+                        if not metric_data.success:
+                            failed_metrics_data.append(metric_data)
+                    except Exception:
+                        failed_metrics_data.append(metric_data)
+    
+            failed_metrics_str = &quot;, &quot;.join(
+                [
+                    f&quot;{metrics_data.name} (score: {metrics_data.score}, threshold: {metrics_data.threshold}, strict: {metrics_data.strict_mode}, error: {metrics_data.error}, reason: {metrics_data.reason})&quot;
+                    for metrics_data in failed_metrics_data
+                ]
+            )
+            if test_case is not None and test_case.flaky:
+                # Flaky test cases don&#x27;t block CI: warn (shows up in pytest&#x27;s
+                # warnings summary) but don&#x27;t raise
+                warnings.warn(
+                    f&quot;Flaky test case failed (no assertion raised): &quot;
+                    f&quot;Metrics: {failed_metrics_str} failed.&quot;
+                )
+            else:
+&gt;               raise AssertionError(f&quot;Metrics: {failed_metrics_str} failed.&quot;)
+E               AssertionError: Metrics: Answer Relevancy (score: 0.5, threshold: 0.7, strict: False, error: None, reason: The score is 0.50 because the response included a generic closing that didn&#x27;t explain how the refund will be paid back, leaving the core question unanswered.) failed.
+
+../../.venv/lib/python3.14/site-packages/deepeval/evaluate/evaluate.py:177: AssertionError</pre></details></div></details><details class="t" data-outcome="failed"><summary><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><span class="tt">How do I turn on two-factor authentication?</span><span class="ts num">Answer Relevancy 0.60/0.70</span></summary><div class="tb"><div class="grid2"><div class="field"><div class="k">Input</div><div class="v">How do I turn on two-factor authentication?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">Sure! To enable two‑factor authentication:
+
+1. Sign in to your account on shopsphere.com.  
+2. Go to **Account Settings**.  
+3. Find the **Two‑Factor Authentication** option and follow the on‑screen prompts to set it up.
+
+Let me know if you need anything else!</div></div></div><div class="metric"><div class="mh"><b>Answer Relevancy</b><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><span class="num">0.60 / 0.70</span></div><p class=reason>The score is 0.60 because the response included generic acknowledgments and closing remarks that didn&#x27;t provide the requested steps for enabling two-factor authentication, reducing its overall relevance.</p><details class="sub"><summary>Judge logs</summary><pre>Statements:
+[
+    &quot;Sure!&quot;,
+    &quot;Sign in to your account on shopsphere.com.&quot;,
+    &quot;Go to Account Settings.&quot;,
+    &quot;Find the Two‑Factor Authentication option and follow the on‑screen prompts to set it up.&quot;,
+    &quot;Let me know if you need anything else!&quot;
+] 
+ 
+Verdicts:
+[
+    {
+        &quot;verdict&quot;: &quot;no&quot;,
+        &quot;reason&quot;: &quot;It&#x27;s just a generic acknowledgement and does not provide any information about enabling two-factor authentication.&quot;
+    },
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;no&quot;,
+        &quot;reason&quot;: &quot;It&#x27;s a generic closing remark that doesn&#x27;t contribute to the steps for enabling two-factor authentication.&quot;
+    }
+]</pre></details></div><details class="sub"><summary>Failure message</summary><pre>chatbot = &lt;targets.chatbot_target.ChatbotTarget object at 0x11503f6a0&gt;
+judge = &lt;deepeval.models.llms.local_model.LocalModel object at 0x113150440&gt;
+golden = ChatbotGolden(input=&#x27;How do I turn on two-factor authentication?&#x27;, expected_output=&#x27;Two-factor authentication can be e...ed in your account settings.&#x27;, context=[&#x27;Two-factor auth can be enabled in account settings.&#x27;], categories=[&#x27;account&#x27;])
+
+    @pytest.mark.chatbot
+    @pytest.mark.quality
+    @pytest.mark.slow
+    @pytest.mark.needs_chatbot
+    @pytest.mark.parametrize(&quot;golden&quot;, GOLDENS, ids=lambda g: g.input[:45])
+    def test_chatbot_answer_relevancy(chatbot, judge, golden):
+        reply= chatbot.chat(golden.input).reply
+        tc = SPEC_ANSWER_RELEVANCY.build_case(golden, reply)
+&gt;       assert_test(tc, [SPEC_ANSWER_RELEVANCY.build_metric(judge)])
+
+tests/chatbot/test_01_chatbot_answer_relevancy.py:25: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+reporting.py:112: in recording_assert_test
+    return original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+test_case = LLMTestCase(input=&#x27;How do I turn on two-factor authentication?&#x27;, actual_output=&#x27;Sure! To enable two‑factor authenticat...servers=None, mcp_tools_called=None, mcp_resources_called=None, mcp_prompts_called=None, custom_column_key_values=None)
+metrics = [&lt;deepeval.metrics.answer_relevancy.answer_relevancy.AnswerRelevancyMetric object at 0x1131c4c50&gt;]
+golden = None, run_async = True
+
+    def assert_test(
+        test_case: Optional[Union[LLMTestCase, ConversationalTestCase]] = None,
+        metrics: Optional[
+            Union[
+                List[BaseMetric],
+                List[BaseConversationalMetric],
+            ]
+        ] = None,
+        golden: Optional[Golden] = None,
+        run_async: bool = True,
+    ):
+        validate_assert_test_inputs(
+            golden=golden,
+            test_case=test_case,
+            metrics=metrics,
+        )
+    
+        async_config = AsyncConfig(throttle_value=0, max_concurrent=100)
+        display_config = DisplayConfig(
+            verbose_mode=should_verbose_print(), show_indicator=True
+        )
+        error_config = ErrorConfig(
+            ignore_errors=should_ignore_errors(),
+            skip_on_missing_params=should_skip_on_missing_params(),
+        )
+        cache_config = CacheConfig(
+            write_cache=get_is_running_deepeval(), use_cache=should_use_cache()
+        )
+    
+        if golden and not test_case:
+            # Trace-scoped assert_test: read the active trace set by the plugin.
+            test_result = _assert_test_from_current_trace(
+                golden=golden,
+                metrics=metrics,
+                error_config=error_config,
+                display_config=display_config,
+            )
+    
+        elif test_case and metrics:
+            check_at_least_one_metric_has_threshold(metrics)
+            if run_async:
+                loop = get_or_create_event_loop()
+                test_result = loop.run_until_complete(
+                    a_execute_test_cases(
+                        [test_case],
+                        metrics,
+                        error_config=error_config,
+                        display_config=display_config,
+                        async_config=async_config,
+                        cache_config=cache_config,
+                        identifier=get_identifier(),
+                        _use_bar_indicator=True,
+                        _is_assert_test=True,
+                    )
+                )[0]
+            else:
+                test_result = execute_test_cases(
+                    [test_case],
+                    metrics,
+                    error_config=error_config,
+                    display_config=display_config,
+                    cache_config=cache_config,
+                    identifier=get_identifier(),
+                    _use_bar_indicator=False,
+                    _is_assert_test=True,
+                )[0]
+    
+        if not test_result.success:
+            failed_metrics_data: List[MetricData] = []
+            # even for conversations, test_result right now is just the
+            # result for the last message
+            for metric_data in test_result.metrics_data:
+                if metric_data.error is not None:
+                    failed_metrics_data.append(metric_data)
+                else:
+                    # This try block is for user defined custom metrics,
+                    # which might not handle the score == undefined case elegantly
+                    try:
+                        if not metric_data.success:
+                            failed_metrics_data.append(metric_data)
+                    except Exception:
+                        failed_metrics_data.append(metric_data)
+    
+            failed_metrics_str = &quot;, &quot;.join(
+                [
+                    f&quot;{metrics_data.name} (score: {metrics_data.score}, threshold: {metrics_data.threshold}, strict: {metrics_data.strict_mode}, error: {metrics_data.error}, reason: {metrics_data.reason})&quot;
+                    for metrics_data in failed_metrics_data
+                ]
+            )
+            if test_case is not None and test_case.flaky:
+                # Flaky test cases don&#x27;t block CI: warn (shows up in pytest&#x27;s
+                # warnings summary) but don&#x27;t raise
+                warnings.warn(
+                    f&quot;Flaky test case failed (no assertion raised): &quot;
+                    f&quot;Metrics: {failed_metrics_str} failed.&quot;
+                )
+            else:
+&gt;               raise AssertionError(f&quot;Metrics: {failed_metrics_str} failed.&quot;)
+E               AssertionError: Metrics: Answer Relevancy (score: 0.6, threshold: 0.7, strict: False, error: None, reason: The score is 0.60 because the response included generic acknowledgments and closing remarks that didn&#x27;t provide the requested steps for enabling two-factor authentication, reducing its overall relevance.) failed.
+
+../../.venv/lib/python3.14/site-packages/deepeval/evaluate/evaluate.py:177: AssertionError</pre></details></div></details><details class="t" data-outcome="failed"><summary><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><span class="tt">Where can I see my past orders?</span><span class="ts num">Answer Relevancy 0.50/0.70</span></summary><div class="tb"><div class="grid2"><div class="field"><div class="k">Input</div><div class="v">Where can I see my past orders?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">You can view your past orders in the **“My Orders”** section after you sign in to your account. Let me know if you need anything else!</div></div></div><div class="metric"><div class="mh"><b>Answer Relevancy</b><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><span class="num">0.50 / 0.70</span></div><p class=reason>The score is 0.50 because the response included a generic closing remark that didn&#x27;t answer the user&#x27;s request about viewing past orders, making the output partially irrelevant.</p><details class="sub"><summary>Judge logs</summary><pre>Statements:
+[
+    &quot;You can view your past orders in the “My Orders” section after you sign in to your account.&quot;,
+    &quot;Let me know if you need anything else!&quot;
+] 
+ 
+Verdicts:
+[
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;no&quot;,
+        &quot;reason&quot;: &quot;The statement is a generic closing remark and does not provide information about where to view past orders.&quot;
+    }
+]</pre></details></div><details class="sub"><summary>Failure message</summary><pre>chatbot = &lt;targets.chatbot_target.ChatbotTarget object at 0x115036670&gt;
+judge = &lt;deepeval.models.llms.local_model.LocalModel object at 0x113150440&gt;
+golden = ChatbotGolden(input=&#x27;Where can I see my past orders?&#x27;, expected_output=&#x27;Your order history is available under &quot;My Orders&quot; after you sign in.&#x27;, context=[&#x27;Order history is available under &quot;My Orders&quot; after sign-in.&#x27;], categories=[&#x27;account&#x27;])
+
+    @pytest.mark.chatbot
+    @pytest.mark.quality
+    @pytest.mark.slow
+    @pytest.mark.needs_chatbot
+    @pytest.mark.parametrize(&quot;golden&quot;, GOLDENS, ids=lambda g: g.input[:45])
+    def test_chatbot_answer_relevancy(chatbot, judge, golden):
+        reply= chatbot.chat(golden.input).reply
+        tc = SPEC_ANSWER_RELEVANCY.build_case(golden, reply)
+&gt;       assert_test(tc, [SPEC_ANSWER_RELEVANCY.build_metric(judge)])
+
+tests/chatbot/test_01_chatbot_answer_relevancy.py:25: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+reporting.py:112: in recording_assert_test
+    return original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+test_case = LLMTestCase(input=&#x27;Where can I see my past orders?&#x27;, actual_output=&#x27;You can view your past orders in the **“My Orders”...servers=None, mcp_tools_called=None, mcp_resources_called=None, mcp_prompts_called=None, custom_column_key_values=None)
+metrics = [&lt;deepeval.metrics.answer_relevancy.answer_relevancy.AnswerRelevancyMetric object at 0x1141ef750&gt;]
+golden = None, run_async = True
+
+    def assert_test(
+        test_case: Optional[Union[LLMTestCase, ConversationalTestCase]] = None,
+        metrics: Optional[
+            Union[
+                List[BaseMetric],
+                List[BaseConversationalMetric],
+            ]
+        ] = None,
+        golden: Optional[Golden] = None,
+        run_async: bool = True,
+    ):
+        validate_assert_test_inputs(
+            golden=golden,
+            test_case=test_case,
+            metrics=metrics,
+        )
+    
+        async_config = AsyncConfig(throttle_value=0, max_concurrent=100)
+        display_config = DisplayConfig(
+            verbose_mode=should_verbose_print(), show_indicator=True
+        )
+        error_config = ErrorConfig(
+            ignore_errors=should_ignore_errors(),
+            skip_on_missing_params=should_skip_on_missing_params(),
+        )
+        cache_config = CacheConfig(
+            write_cache=get_is_running_deepeval(), use_cache=should_use_cache()
+        )
+    
+        if golden and not test_case:
+            # Trace-scoped assert_test: read the active trace set by the plugin.
+            test_result = _assert_test_from_current_trace(
+                golden=golden,
+                metrics=metrics,
+                error_config=error_config,
+                display_config=display_config,
+            )
+    
+        elif test_case and metrics:
+            check_at_least_one_metric_has_threshold(metrics)
+            if run_async:
+                loop = get_or_create_event_loop()
+                test_result = loop.run_until_complete(
+                    a_execute_test_cases(
+                        [test_case],
+                        metrics,
+                        error_config=error_config,
+                        display_config=display_config,
+                        async_config=async_config,
+                        cache_config=cache_config,
+                        identifier=get_identifier(),
+                        _use_bar_indicator=True,
+                        _is_assert_test=True,
+                    )
+                )[0]
+            else:
+                test_result = execute_test_cases(
+                    [test_case],
+                    metrics,
+                    error_config=error_config,
+                    display_config=display_config,
+                    cache_config=cache_config,
+                    identifier=get_identifier(),
+                    _use_bar_indicator=False,
+                    _is_assert_test=True,
+                )[0]
+    
+        if not test_result.success:
+            failed_metrics_data: List[MetricData] = []
+            # even for conversations, test_result right now is just the
+            # result for the last message
+            for metric_data in test_result.metrics_data:
+                if metric_data.error is not None:
+                    failed_metrics_data.append(metric_data)
+                else:
+                    # This try block is for user defined custom metrics,
+                    # which might not handle the score == undefined case elegantly
+                    try:
+                        if not metric_data.success:
+                            failed_metrics_data.append(metric_data)
+                    except Exception:
+                        failed_metrics_data.append(metric_data)
+    
+            failed_metrics_str = &quot;, &quot;.join(
+                [
+                    f&quot;{metrics_data.name} (score: {metrics_data.score}, threshold: {metrics_data.threshold}, strict: {metrics_data.strict_mode}, error: {metrics_data.error}, reason: {metrics_data.reason})&quot;
+                    for metrics_data in failed_metrics_data
+                ]
+            )
+            if test_case is not None and test_case.flaky:
+                # Flaky test cases don&#x27;t block CI: warn (shows up in pytest&#x27;s
+                # warnings summary) but don&#x27;t raise
+                warnings.warn(
+                    f&quot;Flaky test case failed (no assertion raised): &quot;
+                    f&quot;Metrics: {failed_metrics_str} failed.&quot;
+                )
+            else:
+&gt;               raise AssertionError(f&quot;Metrics: {failed_metrics_str} failed.&quot;)
+E               AssertionError: Metrics: Answer Relevancy (score: 0.5, threshold: 0.7, strict: False, error: None, reason: The score is 0.50 because the response included a generic closing remark that didn&#x27;t answer the user&#x27;s request about viewing past orders, making the output partially irrelevant.) failed.
+
+../../.venv/lib/python3.14/site-packages/deepeval/evaluate/evaluate.py:177: AssertionError</pre></details></div></details><details class="t" data-outcome="failed"><summary><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><span class="tt">How much is the SP-MUG-CER and is it dishwash</span><span class="ts num">Answer Relevancy 0.67/0.70</span></summary><div class="tb"><div class="grid2"><div class="field"><div class="k">Input</div><div class="v">How much is the SP-MUG-CER and is it dishwasher safe?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">The ShopSphere Ceramic Mug (SKU SP‑MUG‑CER) costs **$14** and it is **dishwasher‑safe**. Let me know if you need anything else!</div></div></div><div class="metric"><div class="mh"><b>Answer Relevancy</b><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><span class="num">0.67 / 0.70</span></div><p class=reason>The score is 0.67 because the response failed to provide the requested price and dishwasher‑safety details, offering only a generic follow‑up that doesn&#x27;t directly answer the question.</p><details class="sub"><summary>Judge logs</summary><pre>Statements:
+[
+    &quot;The ShopSphere Ceramic Mug (SKU SP-MUG-CER) costs $14.&quot;,
+    &quot;It is dishwasher-safe.&quot;,
+    &quot;Let me know if you need anything else.&quot;
+] 
+ 
+Verdicts:
+[
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;no&quot;,
+        &quot;reason&quot;: &quot;The statement does not provide price or dishwasher safety information; it is a generic follow\u2011up, not directly answering the question.&quot;
+    }
+]</pre></details></div><details class="sub"><summary>Failure message</summary><pre>chatbot = &lt;targets.chatbot_target.ChatbotTarget object at 0x1141ac8d0&gt;
+judge = &lt;deepeval.models.llms.local_model.LocalModel object at 0x113150440&gt;
+golden = ChatbotGolden(input=&#x27;How much is the SP-MUG-CER and is it dishwasher safe?&#x27;, expected_output=&#x27;The ShopSphere Ceramic M...hwasher-safe.&#x27;, context=[&#x27;SKU SP-MUG-CER: ShopSphere Ceramic Mug 12oz, $14, dishwasher-safe.&#x27;], categories=[&#x27;product&#x27;])
+
+    @pytest.mark.chatbot
+    @pytest.mark.quality
+    @pytest.mark.slow
+    @pytest.mark.needs_chatbot
+    @pytest.mark.parametrize(&quot;golden&quot;, GOLDENS, ids=lambda g: g.input[:45])
+    def test_chatbot_answer_relevancy(chatbot, judge, golden):
+        reply= chatbot.chat(golden.input).reply
+        tc = SPEC_ANSWER_RELEVANCY.build_case(golden, reply)
+&gt;       assert_test(tc, [SPEC_ANSWER_RELEVANCY.build_metric(judge)])
+
+tests/chatbot/test_01_chatbot_answer_relevancy.py:25: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+reporting.py:112: in recording_assert_test
+    return original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+test_case = LLMTestCase(input=&#x27;How much is the SP-MUG-CER and is it dishwasher safe?&#x27;, actual_output=&#x27;The ShopSphere Ceramic Mug (...servers=None, mcp_tools_called=None, mcp_resources_called=None, mcp_prompts_called=None, custom_column_key_values=None)
+metrics = [&lt;deepeval.metrics.answer_relevancy.answer_relevancy.AnswerRelevancyMetric object at 0x1141ef750&gt;]
+golden = None, run_async = True
+
+    def assert_test(
+        test_case: Optional[Union[LLMTestCase, ConversationalTestCase]] = None,
+        metrics: Optional[
+            Union[
+                List[BaseMetric],
+                List[BaseConversationalMetric],
+            ]
+        ] = None,
+        golden: Optional[Golden] = None,
+        run_async: bool = True,
+    ):
+        validate_assert_test_inputs(
+            golden=golden,
+            test_case=test_case,
+            metrics=metrics,
+        )
+    
+        async_config = AsyncConfig(throttle_value=0, max_concurrent=100)
+        display_config = DisplayConfig(
+            verbose_mode=should_verbose_print(), show_indicator=True
+        )
+        error_config = ErrorConfig(
+            ignore_errors=should_ignore_errors(),
+            skip_on_missing_params=should_skip_on_missing_params(),
+        )
+        cache_config = CacheConfig(
+            write_cache=get_is_running_deepeval(), use_cache=should_use_cache()
+        )
+    
+        if golden and not test_case:
+            # Trace-scoped assert_test: read the active trace set by the plugin.
+            test_result = _assert_test_from_current_trace(
+                golden=golden,
+                metrics=metrics,
+                error_config=error_config,
+                display_config=display_config,
+            )
+    
+        elif test_case and metrics:
+            check_at_least_one_metric_has_threshold(metrics)
+            if run_async:
+                loop = get_or_create_event_loop()
+                test_result = loop.run_until_complete(
+                    a_execute_test_cases(
+                        [test_case],
+                        metrics,
+                        error_config=error_config,
+                        display_config=display_config,
+                        async_config=async_config,
+                        cache_config=cache_config,
+                        identifier=get_identifier(),
+                        _use_bar_indicator=True,
+                        _is_assert_test=True,
+                    )
+                )[0]
+            else:
+                test_result = execute_test_cases(
+                    [test_case],
+                    metrics,
+                    error_config=error_config,
+                    display_config=display_config,
+                    cache_config=cache_config,
+                    identifier=get_identifier(),
+                    _use_bar_indicator=False,
+                    _is_assert_test=True,
+                )[0]
+    
+        if not test_result.success:
+            failed_metrics_data: List[MetricData] = []
+            # even for conversations, test_result right now is just the
+            # result for the last message
+            for metric_data in test_result.metrics_data:
+                if metric_data.error is not None:
+                    failed_metrics_data.append(metric_data)
+                else:
+                    # This try block is for user defined custom metrics,
+                    # which might not handle the score == undefined case elegantly
+                    try:
+                        if not metric_data.success:
+                            failed_metrics_data.append(metric_data)
+                    except Exception:
+                        failed_metrics_data.append(metric_data)
+    
+            failed_metrics_str = &quot;, &quot;.join(
+                [
+                    f&quot;{metrics_data.name} (score: {metrics_data.score}, threshold: {metrics_data.threshold}, strict: {metrics_data.strict_mode}, error: {metrics_data.error}, reason: {metrics_data.reason})&quot;
+                    for metrics_data in failed_metrics_data
+                ]
+            )
+            if test_case is not None and test_case.flaky:
+                # Flaky test cases don&#x27;t block CI: warn (shows up in pytest&#x27;s
+                # warnings summary) but don&#x27;t raise
+                warnings.warn(
+                    f&quot;Flaky test case failed (no assertion raised): &quot;
+                    f&quot;Metrics: {failed_metrics_str} failed.&quot;
+                )
+            else:
+&gt;               raise AssertionError(f&quot;Metrics: {failed_metrics_str} failed.&quot;)
+E               AssertionError: Metrics: Answer Relevancy (score: 0.6666666666666666, threshold: 0.7, strict: False, error: None, reason: The score is 0.67 because the response failed to provide the requested price and dishwasher‑safety details, offering only a generic follow‑up that doesn&#x27;t directly answer the question.) failed.
+
+../../.venv/lib/python3.14/site-packages/deepeval/evaluate/evaluate.py:177: AssertionError</pre></details></div></details><details class="t" data-outcome="failed"><summary><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><span class="tt">What are the specs of the SP-LAMP-LED?</span><span class="ts num">Answer Relevancy 0.50/0.70</span></summary><div class="tb"><div class="grid2"><div class="field"><div class="k">Input</div><div class="v">What are the specs of the SP-LAMP-LED?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">The **ShopSphere LED Desk Lamp (SKU SP-LAMP-LED)** costs **$39** and features:
+
+- **3 brightness levels**
+- **USB‑C** power connection
+
+Let me know if you need anything else!</div></div></div><div class="metric"><div class="mh"><b>Answer Relevancy</b><span class="badge st-failed"><svg class="ico st-failed" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg><span>Failed</span></span><span class="num">0.50 / 0.70</span></div><p class=reason>The score is 0.50 because the response included irrelevant content—price details and a generic closing remark—rather than focusing solely on the technical specifications, preventing a higher relevance rating.</p><details class="sub"><summary>Judge logs</summary><pre>Statements:
+[
+    &quot;The ShopSphere LED Desk Lamp (SKU SP-LAMP-LED) costs $39.&quot;,
+    &quot;It has 3 brightness levels.&quot;,
+    &quot;It has a USB‑C power connection.&quot;,
+    &quot;Let me know if you need anything else!&quot;
+] 
+ 
+Verdicts:
+[
+    {
+        &quot;verdict&quot;: &quot;no&quot;,
+        &quot;reason&quot;: &quot;The statement provides the price, which is not a technical specification of the product.&quot;
+    },
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;no&quot;,
+        &quot;reason&quot;: &quot;The statement is a generic closing remark and does not provide any product specifications.&quot;
+    }
+]</pre></details></div><details class="sub"><summary>Failure message</summary><pre>chatbot = &lt;targets.chatbot_target.ChatbotTarget object at 0x1131a2750&gt;
+judge = &lt;deepeval.models.llms.local_model.LocalModel object at 0x113150440&gt;
+golden = ChatbotGolden(input=&#x27;What are the specs of the SP-LAMP-LED?&#x27;, expected_output=&#x27;The ShopSphere LED Desk Lamp (SP-LAMP-L...B-C.&#x27;, context=[&#x27;SKU SP-LAMP-LED: ShopSphere LED Desk Lamp, $39, 3 brightness levels, USB-C.&#x27;], categories=[&#x27;product&#x27;])
+
+    @pytest.mark.chatbot
+    @pytest.mark.quality
+    @pytest.mark.slow
+    @pytest.mark.needs_chatbot
+    @pytest.mark.parametrize(&quot;golden&quot;, GOLDENS, ids=lambda g: g.input[:45])
+    def test_chatbot_answer_relevancy(chatbot, judge, golden):
+        reply= chatbot.chat(golden.input).reply
+        tc = SPEC_ANSWER_RELEVANCY.build_case(golden, reply)
+&gt;       assert_test(tc, [SPEC_ANSWER_RELEVANCY.build_metric(judge)])
+
+tests/chatbot/test_01_chatbot_answer_relevancy.py:25: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+reporting.py:112: in recording_assert_test
+    return original(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+test_case = LLMTestCase(input=&#x27;What are the specs of the SP-LAMP-LED?&#x27;, actual_output=&#x27;The **ShopSphere LED Desk Lamp (SKU\u202fSP...servers=None, mcp_tools_called=None, mcp_resources_called=None, mcp_prompts_called=None, custom_column_key_values=None)
+metrics = [&lt;deepeval.metrics.answer_relevancy.answer_relevancy.AnswerRelevancyMetric object at 0x115062150&gt;]
+golden = None, run_async = True
+
+    def assert_test(
+        test_case: Optional[Union[LLMTestCase, ConversationalTestCase]] = None,
+        metrics: Optional[
+            Union[
+                List[BaseMetric],
+                List[BaseConversationalMetric],
+            ]
+        ] = None,
+        golden: Optional[Golden] = None,
+        run_async: bool = True,
+    ):
+        validate_assert_test_inputs(
+            golden=golden,
+            test_case=test_case,
+            metrics=metrics,
+        )
+    
+        async_config = AsyncConfig(throttle_value=0, max_concurrent=100)
+        display_config = DisplayConfig(
+            verbose_mode=should_verbose_print(), show_indicator=True
+        )
+        error_config = ErrorConfig(
+            ignore_errors=should_ignore_errors(),
+            skip_on_missing_params=should_skip_on_missing_params(),
+        )
+        cache_config = CacheConfig(
+            write_cache=get_is_running_deepeval(), use_cache=should_use_cache()
+        )
+    
+        if golden and not test_case:
+            # Trace-scoped assert_test: read the active trace set by the plugin.
+            test_result = _assert_test_from_current_trace(
+                golden=golden,
+                metrics=metrics,
+                error_config=error_config,
+                display_config=display_config,
+            )
+    
+        elif test_case and metrics:
+            check_at_least_one_metric_has_threshold(metrics)
+            if run_async:
+                loop = get_or_create_event_loop()
+                test_result = loop.run_until_complete(
+                    a_execute_test_cases(
+                        [test_case],
+                        metrics,
+                        error_config=error_config,
+                        display_config=display_config,
+                        async_config=async_config,
+                        cache_config=cache_config,
+                        identifier=get_identifier(),
+                        _use_bar_indicator=True,
+                        _is_assert_test=True,
+                    )
+                )[0]
+            else:
+                test_result = execute_test_cases(
+                    [test_case],
+                    metrics,
+                    error_config=error_config,
+                    display_config=display_config,
+                    cache_config=cache_config,
+                    identifier=get_identifier(),
+                    _use_bar_indicator=False,
+                    _is_assert_test=True,
+                )[0]
+    
+        if not test_result.success:
+            failed_metrics_data: List[MetricData] = []
+            # even for conversations, test_result right now is just the
+            # result for the last message
+            for metric_data in test_result.metrics_data:
+                if metric_data.error is not None:
+                    failed_metrics_data.append(metric_data)
+                else:
+                    # This try block is for user defined custom metrics,
+                    # which might not handle the score == undefined case elegantly
+                    try:
+                        if not metric_data.success:
+                            failed_metrics_data.append(metric_data)
+                    except Exception:
+                        failed_metrics_data.append(metric_data)
+    
+            failed_metrics_str = &quot;, &quot;.join(
+                [
+                    f&quot;{metrics_data.name} (score: {metrics_data.score}, threshold: {metrics_data.threshold}, strict: {metrics_data.strict_mode}, error: {metrics_data.error}, reason: {metrics_data.reason})&quot;
+                    for metrics_data in failed_metrics_data
+                ]
+            )
+            if test_case is not None and test_case.flaky:
+                # Flaky test cases don&#x27;t block CI: warn (shows up in pytest&#x27;s
+                # warnings summary) but don&#x27;t raise
+                warnings.warn(
+                    f&quot;Flaky test case failed (no assertion raised): &quot;
+                    f&quot;Metrics: {failed_metrics_str} failed.&quot;
+                )
+            else:
+&gt;               raise AssertionError(f&quot;Metrics: {failed_metrics_str} failed.&quot;)
+E               AssertionError: Metrics: Answer Relevancy (score: 0.5, threshold: 0.7, strict: False, error: None, reason: The score is 0.50 because the response included irrelevant content—price details and a generic closing remark—rather than focusing solely on the technical specifications, preventing a higher relevance rating.) failed.
+
+../../.venv/lib/python3.14/site-packages/deepeval/evaluate/evaluate.py:177: AssertionError</pre></details></div></details><details class="t" data-outcome="passed"><summary><span class="badge st-passed"><svg class="ico st-passed" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 5"/></svg><span>Passed</span></span><span class="tt">Tell me about the SP-EARBUDS-01.</span><span class="ts num">Answer Relevancy 1.00/0.70</span></summary><div class="tb"><div class="grid2"><div class="field"><div class="k">Input</div><div class="v">Tell me about the SP-EARBUDS-01.</div></div><div class="field"><div class="k">Bot reply</div><div class="v">Sure! Here are the details for **SKU SP‑EARBUDS‑01**:
+
+- **Product:** ShopSphere Wireless Earbuds  
+- **Price:** $79  
+- **Features:** Bluetooth 5.3, 30 hour battery life, IPX4 water resistance  
+
+Let me know if you’d like more information or help with anything else!</div></div></div><div class="metric"><div class="mh"><b>Answer Relevancy</b><span class="badge st-passed"><svg class="ico st-passed" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 5"/></svg><span>Passed</span></span><span class="num">1.00 / 0.70</span></div><p class=reason>The score is 1.00 because the response fully addressed the request about the SP-EARBUDS-01 with no irrelevant statements.</p><details class="sub"><summary>Judge logs</summary><pre>Statements:
+[
+    &quot;Sure! Here are the details for SKU SP‑EARBUDS‑01.&quot;,
+    &quot;The product is ShopSphere Wireless Earbuds.&quot;,
+    &quot;The price is $79.&quot;,
+    &quot;Features include Bluetooth 5.3, 30 hour battery life, and IPX4 water resistance.&quot;,
+    &quot;Let me know if you’d like more information or help with anything else!&quot;
+] 
+ 
+Verdicts:
+[
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    }
+]</pre></details></div></div></details><details class="t" data-outcome="passed"><summary><span class="badge st-passed"><svg class="ico st-passed" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 5"/></svg><span>Passed</span></span><span class="tt">How do I reset my password?</span><span class="ts num">Answer Relevancy 1.00/0.70</span></summary><div class="tb"><div class="grid2"><div class="field"><div class="k">Input</div><div class="v">How do I reset my password?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">Sure! To reset your password, just go to:
+
+- **shopsphere.com/account/reset**
+
+Enter your email address there, and follow the instructions sent to you. Let me know if you need anything else!</div></div></div><div class="metric"><div class="mh"><b>Answer Relevancy</b><span class="badge st-passed"><svg class="ico st-passed" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 5"/></svg><span>Passed</span></span><span class="num">1.00 / 0.70</span></div><p class=reason>The score is 1.00 because the response fully answered the password reset query with no irrelevant statements.</p><details class="sub"><summary>Judge logs</summary><pre>Statements:
+[
+    &quot;Sure!&quot;,
+    &quot;To reset your password, just go to shopsphere.com/account/reset.&quot;,
+    &quot;Enter your email address there, and follow the instructions sent to you.&quot;,
+    &quot;Let me know if you need anything else!&quot;
+] 
+ 
+Verdicts:
+[
+    {
+        &quot;verdict&quot;: &quot;idk&quot;,
+        &quot;reason&quot;: &quot;&#x27;Sure!&#x27; is a generic acknowledgement and does not provide any information about resetting the password, making its relevance ambiguous.&quot;
+    },
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;idk&quot;,
+        &quot;reason&quot;: &quot;&#x27;Let me know if you need anything else!&#x27; is a polite closing that does not directly address the password reset request, so its relevance is ambiguous.&quot;
+    }
+]</pre></details></div></div></details><details class="t" data-outcome="passed"><summary><span class="badge st-passed"><svg class="ico st-passed" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 5"/></svg><span>Passed</span></span><span class="tt">Can I return underwear?</span><span class="ts num">Answer Relevancy 1.00/0.70</span></summary><div class="tb"><div class="grid2"><div class="field"><div class="k">Input</div><div class="v">Can I return underwear?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">Underwear is non‑returnable per our Return Policy. Let me know if you have any other questions!</div></div></div><div class="metric"><div class="mh"><b>Answer Relevancy</b><span class="badge st-passed"><svg class="ico st-passed" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 5"/></svg><span>Passed</span></span><span class="num">1.00 / 0.70</span></div><p class=reason>The score is 1.00 because the response directly answered the question about returning underwear with no irrelevant content.</p><details class="sub"><summary>Judge logs</summary><pre>Statements:
+[
+    &quot;Underwear is non‑returnable per our Return Policy.&quot;,
+    &quot;Let me know if you have any other questions!&quot;
+] 
+ 
+Verdicts:
+[
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;idk&quot;,
+        &quot;reason&quot;: &quot;The statement is a generic closing and does not directly address the question about returning underwear, though it could be seen as supportive conversation.&quot;
+    }
+]</pre></details></div></div></details><details class="t" data-outcome="passed"><summary><span class="badge st-passed"><svg class="ico st-passed" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 5"/></svg><span>Passed</span></span><span class="tt">Can I pay with cryptocurrency?</span><span class="ts num">Answer Relevancy 1.00/0.70</span></summary><div class="tb"><div class="grid2"><div class="field"><div class="k">Input</div><div class="v">Can I pay with cryptocurrency?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">I’m sorry, but I don’t have information on that. Please reach out to our support team at support@test.com for assistance.</div></div></div><div class="metric"><div class="mh"><b>Answer Relevancy</b><span class="badge st-passed"><svg class="ico st-passed" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 5"/></svg><span>Passed</span></span><span class="num">1.00 / 0.70</span></div><p class=reason>The score is 1.00 because the response directly answered the question about paying with cryptocurrency and contained no irrelevant statements.</p><details class="sub"><summary>Judge logs</summary><pre>Statements:
+[
+    &quot;I’m sorry, but I don’t have information on that.&quot;,
+    &quot;Please reach out to our support team at support@test.com for assistance.&quot;
+] 
+ 
+Verdicts:
+[
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    }
+]</pre></details></div></div></details><details class="t" data-outcome="passed"><summary><span class="badge st-passed"><svg class="ico st-passed" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 5"/></svg><span>Passed</span></span><span class="tt">Tell me about the SP-FAKE-99.</span><span class="ts num">Answer Relevancy 1.00/0.70</span></summary><div class="tb"><div class="grid2"><div class="field"><div class="k">Input</div><div class="v">Tell me about the SP-FAKE-99.</div></div><div class="field"><div class="k">Bot reply</div><div class="v">I’m sorry, but I don’t have information on the product SP‑FAKE‑99. If you need further assistance, feel free to let me know or contact support at support@test.com.</div></div></div><div class="metric"><div class="mh"><b>Answer Relevancy</b><span class="badge st-passed"><svg class="ico st-passed" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 5"/></svg><span>Passed</span></span><span class="num">1.00 / 0.70</span></div><p class=reason>The score is 1.00 because the response fully addressed the request about SP-FAKE-99 with no irrelevant statements.</p><details class="sub"><summary>Judge logs</summary><pre>Statements:
+[
+    &quot;I’m sorry, but I don’t have information on the product SP‑FAKE‑99.&quot;,
+    &quot;If you need further assistance, feel free to let me know or contact support at support@test.com.&quot;
+] 
+ 
+Verdicts:
+[
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;idk&quot;,
+        &quot;reason&quot;: &quot;The statement does not provide information about SP-FAKE-99, but offers generic further assistance, which is not directly answering the request yet could be considered supportive.&quot;
+    }
+]</pre></details></div></div></details><details class="t" data-outcome="passed"><summary><span class="badge st-passed"><svg class="ico st-passed" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 5"/></svg><span>Passed</span></span><span class="tt">If I order in the morning, does it ship today</span><span class="ts num">Answer Relevancy 0.75/0.70</span></summary><div class="tb"><div class="grid2"><div class="field"><div class="k">Input</div><div class="v">If I order in the morning, does it ship today?</div></div><div class="field"><div class="k">Bot reply</div><div class="v">Yes! Orders placed before 12 pm ET on a weekday are shipped the same day. After that, they follow the standard shipping timeline (5‑7 business days in the US for standard shipping). Let me know if you need anything else!</div></div></div><div class="metric"><div class="mh"><b>Answer Relevancy</b><span class="badge st-passed"><svg class="ico st-passed" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 5"/></svg><span>Passed</span></span><span class="num">0.75 / 0.70</span></div><p class=reason>The score is 0.75 because the response included a generic closing statement that didn&#x27;t address the shipping question, reducing relevance.</p><details class="sub"><summary>Judge logs</summary><pre>Statements:
+[
+    &quot;Yes!&quot;,
+    &quot;Orders placed before 12 pm ET on a weekday are shipped the same day.&quot;,
+    &quot;After that, they follow the standard shipping timeline (5‑7 business days in the US for standard shipping).&quot;,
+    &quot;Let me know if you need anything else!&quot;
+] 
+ 
+Verdicts:
+[
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;no&quot;,
+        &quot;reason&quot;: &quot;The statement is a generic closing and does not provide information related to the shipping question.&quot;
+    }
+]</pre></details></div></div></details><details class="t" data-outcome="passed"><summary><span class="badge st-passed"><svg class="ico st-passed" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 5"/></svg><span>Passed</span></span><span class="tt">Tell me about the SP-HOODIE-CL.</span><span class="ts num">Answer Relevancy 1.00/0.70</span></summary><div class="tb"><div class="grid2"><div class="field"><div class="k">Input</div><div class="v">Tell me about the SP-HOODIE-CL.</div></div><div class="field"><div class="k">Bot reply</div><div class="v">Sure! The **ShopSphere Classic Hoodie (SKU SP‑HOODIE‑CL)** costs **$49**. It’s made of **80% cotton / 20% polyester** and is available in sizes **XS‑XXL**. Let me know if you’d like more details or help with anything else!</div></div></div><div class="metric"><div class="mh"><b>Answer Relevancy</b><span class="badge st-passed"><svg class="ico st-passed" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 5"/></svg><span>Passed</span></span><span class="num">1.00 / 0.70</span></div><p class=reason>The score is 1.00 because the response fully addressed the request about the SP-HOODIE-CL with no irrelevant statements.</p><details class="sub"><summary>Judge logs</summary><pre>Statements:
+[
+    &quot;The ShopSphere Classic Hoodie (SKU SP‑HOODIE‑CL) costs $49.&quot;,
+    &quot;It’s made of 80% cotton / 20% polyester.&quot;,
+    &quot;It is available in sizes XS‑XXL.&quot;,
+    &quot;Let me know if you’d like more details or help with anything else!&quot;
+] 
+ 
+Verdicts:
+[
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;yes&quot;,
+        &quot;reason&quot;: null
+    },
+    {
+        &quot;verdict&quot;: &quot;idk&quot;,
+        &quot;reason&quot;: &quot;The statement is a generic offer for further assistance and does not directly provide information about the SP\u2011HOODIE\u2011CL.&quot;
+    }
+]</pre></details></div></div></details></div></div></section><footer>Generated 21 Sep 2026, 01:53. Scores run from 0 to 1 and 1.0 is best for every metric; a test passes when its score reaches the threshold. An error means the judge never returned a score, so it is not counted as a failure.</footer></div><script>
+const rows=[...document.querySelectorAll('details.t')];
+document.querySelectorAll('.tools button[data-f]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.tools button[data-f]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+  rows.forEach(r=>{r.hidden=b.dataset.f!=='all'&&r.dataset.outcome!==b.dataset.f;});
+}));
+const openAll=document.getElementById('openall');
+openAll.addEventListener('click',()=>{const open=openAll.textContent==='Expand all';rows.forEach(r=>{r.open=open;});openAll.textContent=open?'Collapse all':'Expand all';});
+window.addEventListener('beforeprint',()=>document.querySelectorAll('details').forEach(d=>{d.open=true;}));
+</script></body></html>

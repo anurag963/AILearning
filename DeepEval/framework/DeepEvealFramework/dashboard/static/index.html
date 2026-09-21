@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>DeepEval Results</title>
+<style>
+  :root {
+    --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #6f6d68;
+    --grid: #e1e0d9; --wash: rgba(11, 11, 11, 0.045); --border: rgba(11, 11, 11, 0.10);
+    --accent: #2a78d6; --on-accent: #ffffff; --meter-track: #cde2fb; --meter-fill: #2a78d6;
+    --good: #0ca30c; --warning: #fab219; --critical: #d03b3b; --skip: #898781;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #a09e96;
+      --grid: #2c2c2a; --wash: rgba(255, 255, 255, 0.06); --border: rgba(255, 255, 255, 0.10);
+      --accent: #3987e5; --on-accent: #0d0d0d; --meter-track: #0d366b; --meter-fill: #3987e5;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 20px; font-weight: 600; margin: 0; }
+  h2 { font-size: 13px; font-weight: 600; margin: 0 0 12px; color: var(--ink-2); }
+  button, select, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .muted { color: var(--muted); } .num { font-variant-numeric: tabular-nums; }
+  [hidden] { display: none !important; }
+
+  /* header */
+  .top { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: flex-end; justify-content: space-between; }
+  .meta { color: var(--ink-2); font-size: 13px; margin-top: 4px; }
+  .meta code { font-size: 12px; background: var(--wash); padding: 1px 6px; border-radius: 4px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; }
+  select, input[type="search"], .btn {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; min-height: 34px;
+  }
+  .btn { cursor: pointer; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; color: inherit; white-space: nowrap; }
+  .btn:hover:not(:disabled) { background: var(--wash); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+  .btn.primary:hover:not(:disabled) { background: var(--accent); filter: brightness(1.1); }
+  .btn.danger { border-color: var(--critical); }
+  .btn.sm { min-height: 28px; padding: 2px 10px; font-size: 13px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  section { margin-top: 20px; }
+
+  /* stat tiles */
+  .kpis { display: grid; grid-template-columns: 1.4fr repeat(4, 1fr); gap: 12px; }
+  @media (max-width: 860px) { .kpis { grid-template-columns: 1fr 1fr; } .kpis .hero { grid-column: 1 / -1; } }
+  .tile .label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-2); }
+  .tile .value { font-size: 28px; font-weight: 600; line-height: 1.2; margin-top: 4px; }
+  .tile .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .hero .value { font-size: 56px; line-height: 1.05; }
+
+  /* status */
+  .ico { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .st-passed { color: var(--good); } .st-failed { color: var(--critical); }
+  .st-error { color: var(--warning); } .st-skipped, .st-notrun { color: var(--skip); }
+  .badge { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; white-space: nowrap; }
+  .badge span { color: var(--ink); }
+
+  /* job bar */
+  .jobbar .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+  .live { display: inline-flex; align-items: center; gap: 8px; font-weight: 500; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .25; } }
+  @media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
+  .track { position: relative; height: 6px; border-radius: 3px; background: var(--meter-track); }
+  .fill { position: absolute; inset: 0 auto 0 0; border-radius: 3px; background: var(--meter-fill); }
+  .fill.bad { background: var(--critical); }
+  .tick { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; background: var(--ink); border-radius: 1px; }
+  .jobbar .track { flex: 1 1 200px; min-width: 120px; }
+  details { margin-top: 10px; } summary { cursor: pointer; color: var(--ink-2); font-size: 13px; }
+  pre { margin: 6px 0 0; padding: 10px 12px; background: var(--wash); border-radius: 8px; overflow: auto; max-height: 260px; font: 12px/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+  /* area breakdown */
+  .bars { display: grid; gap: 2px; }
+  .bar-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; margin: 0 -8px; padding: 2px 8px; border-radius: 8px; }
+  .bar-row.sel { background: var(--wash); box-shadow: inset 0 0 0 1px var(--accent); }
+  .bar-main { display: grid; grid-template-columns: 200px 1fr 104px; gap: 12px; align-items: center; padding: 5px 0; background: none; border: 0; text-align: left; cursor: pointer; }
+  .bar-main .name { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar-main .count { color: var(--ink-2); text-align: right; white-space: nowrap; }
+  .stack { display: flex; gap: 2px; height: 14px; }
+  .seg { min-width: 4px; } .seg:last-child { border-radius: 0 4px 4px 0; }
+  .seg.passed { background: var(--good); } .seg.failed { background: var(--critical); } .seg.error { background: var(--warning); }
+  .seg.skipped { background: var(--skip); } .seg.notrun { background: var(--grid); }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 12px; font-size: 13px; color: var(--ink-2); }
+  .legend .key { display: inline-flex; align-items: center; gap: 6px; } .legend .sw { width: 10px; height: 10px; border-radius: 2px; }
+  @media (max-width: 640px) { .bar-main { grid-template-columns: 1fr 64px; } .bar-main .stack { grid-column: 1 / -1; order: 3; } }
+
+  /* filters */
+  .filters { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin-bottom: 4px; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 5px 12px; }
+  .chip:hover { background: var(--wash); }
+  .chip[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); font-weight: 600; }
+  .chip .n { color: var(--muted); font-weight: 400; }
+  input[type="search"] { flex: 1 1 200px; min-width: 160px; }
+
+  /* scenario grid */
+  .area { margin-top: 24px; }
+  .area-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-bottom: 10px; }
+  .area-head h3 { font-size: 15px; margin: 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 12px; }
+  .sc { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-left: 3px solid var(--grid); }
+  .sc.passed { border-left-color: var(--good); } .sc.failed { border-left-color: var(--critical); }
+  .sc.error { border-left-color: var(--warning); } .sc.notrun { border-left-style: dashed; }
+  .sc-top { display: flex; align-items: center; gap: 8px; }
+  .sc-top .grow { flex: 1; }
+  .tag { font-size: 12px; padding: 0 8px; border-radius: 999px; background: var(--wash); color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px; }
+  .sc-title { margin: 0; font-size: 14px; font-weight: 600; line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow-wrap: anywhere; min-height: 3.8em; }
+  .score { display: flex; align-items: baseline; gap: 8px; }
+  .score .big { font-size: 30px; font-weight: 600; line-height: 1.1; }
+  .sc .meter { display: grid; gap: 4px; margin-top: 6px; }
+  .sc .mname { font-size: 12px; color: var(--muted); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sc .note { font-size: 12px; color: var(--ink-2); min-height: 18px; }
+  .sc-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 8px; border-top: 1px solid var(--grid); font-size: 12px; }
+  .empty { padding: 40px 16px; text-align: center; color: var(--ink-2); }
+  .empty code { background: var(--wash); padding: 2px 6px; border-radius: 4px; }
+  .busy { opacity: .55; transition: opacity .15s; }
+
+  /* details dialog */
+  dialog { width: min(920px, calc(100vw - 24px)); max-height: calc(100vh - 32px); padding: 0; border: 1px solid var(--border); border-radius: 14px; background: var(--page); color: var(--ink); }
+  dialog::backdrop { background: rgba(0, 0, 0, .55); }
+  .dlg-head { position: sticky; top: 0; z-index: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 14px 18px; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .dlg-head h2 { margin: 0; flex: 1 1 240px; font-size: 15px; color: var(--ink); overflow-wrap: anywhere; }
+  .dlg-body { padding: 4px 18px 20px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
+  .field { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+  .field .k { font-size: 12px; font-weight: 600; color: var(--ink-2); margin-bottom: 4px; }
+  .field .v { white-space: pre-wrap; overflow-wrap: anywhere; } .field ul { margin: 0; padding-left: 18px; }
+  .turn { padding: 6px 0; border-top: 1px solid var(--grid); } .k + .turn { border-top: 0; }
+  .turn .who { font-size: 12px; font-weight: 600; color: var(--ink-2); }
+  .metric { margin-top: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+  .metric .mh { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .metric .reason { margin: 10px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .meter-big { display: grid; gap: 4px; } .meter-big .track { height: 8px; border-radius: 4px; } .meter-big .fill { border-radius: 4px; }
+  .meter-big .cap { text-align: right; font-size: 12px; color: var(--ink-2); }
+  .errbox { margin-top: 12px; padding: 8px 10px; border-radius: 8px; background: var(--wash); border-left: 3px solid var(--warning); white-space: pre-wrap; overflow-wrap: anywhere; }
+
+  #toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 50; max-width: min(520px, calc(100vw - 24px)); padding: 10px 16px; border-radius: 10px; background: var(--ink); color: var(--page); font-weight: 500; box-shadow: 0 6px 24px rgba(0,0,0,.3); }
+  #toast.bad { background: var(--critical); color: #fff; }
+  #tip { position: fixed; z-index: 60; pointer-events: none; display: none; max-width: 260px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; box-shadow: 0 4px 16px rgba(0,0,0,.16); font-size: 12px; }
+  #tip b { font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1>DeepEval results</h1>
+      <div class="meta" id="meta"></div>
+    </div>
+    <div class="controls">
+      <select id="viewSelect" aria-label="View"></select>
+      <button class="btn primary" id="runAll" type="button"></button>
+      <button class="btn danger" id="stopBtn" type="button" hidden></button>
+      <button class="btn" id="refresh" type="button">Refresh</button>
+      <a class="btn" id="reportLink" href="/report?run=latest" target="_blank" rel="noopener">Report</a>
+      <a class="btn" href="/report?run=combined" target="_blank" rel="noopener" title="Latest real verdict of every test across all runs">Combined report</a>
+    </div>
+  </div>
+  <div id="jobbar"></div>
+  <div id="app"></div>
+</div>
+<dialog id="dlg"></dialog>
+<div id="toast" role="status" hidden></div>
+<div id="tip" role="tooltip"></div>
+
+<script>
+"use strict";
+
+// ---------- helpers ----------
+const SVG = "http://www.w3.org/2000/svg";
+const GLYPH = {
+  passed: "M3 8.5l3.2 3.2L13 5", failed: "M4 4l8 8M12 4l-8 8", error: "M8 3.5v6M8 12.5v.1", skipped: "M4 8h8",
+  notrun: "M8 3a5 5 0 1 0 0 10A5 5 0 0 0 8 3z", play: "M5.5 3.5v9l7-4.5z", stop: "M4.5 4.5h7v7h-7z",
+};
+const OUTCOMES = { passed: "Passed", failed: "Failed", error: "Error", skipped: "Skipped", notrun: "Not run" };
+const VAR = { passed: "good", failed: "critical", error: "warning", skipped: "skip", notrun: "grid" };
+
+// Every string from a run file (replies, reasons, errors) is untrusted: it only ever goes in via textContent.
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v === false || v == null) continue;
+    if (k === "class") el.className = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const kid of kids.flat()) {
+    if (kid == null || kid === false) continue;
+    el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  }
+  return el;
+}
+function icon(name, extra) {
+  const svg = document.createElementNS(SVG, "svg");
+  svg.setAttribute("viewBox", "0 0 16 16"); svg.setAttribute("class", "ico " + (extra || "")); svg.setAttribute("aria-hidden", "true");
+  const p = document.createElementNS(SVG, "path"); p.setAttribute("d", GLYPH[name]); svg.append(p);
+  return svg;
+}
+const badge = (o) => h("span", { class: `badge st-${o}` }, icon(o), h("span", null, OUTCOMES[o]));
+const fmtScore = (n) => (typeof n === "number" ? n.toFixed(2) : "–");
+const fmtDur = (s) => (s >= 60 ? `${Math.floor(s / 60)}m ${Math.round(s % 60)}s` : `${(+s).toFixed(1)}s`);
+function fmtDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) + " " + d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+}
+function fileLabel(file) {
+  const m = /^test_(\d+)_(?:chatbot_)?(.+)\.py$/.exec(file);
+  return m ? `${m[1]} · ${m[2].replace(/_/g, " ")}` : file;
+}
+const testLabel = (t) => t.replace(/^test_(?:chatbot_)?/, "").replace(/_/g, " ");
+const $ = (id) => document.getElementById(id);
+
+// deepeval wraps a Groq 429 in a tenacity RetryError, so the cause is buried mid-traceback.
+function errorHint(t) {
+  if (!t || t.outcome !== "error") return null;
+  return /RateLimitError|rate_limit_exceeded|Error code: 429/.test(t.message + JSON.stringify(t.calls))
+    ? "Rate limited by Groq (429)" : "Errored before scoring";
+}
+const shQuote = (s) => "'" + s.replace(/'/g, "'\\''") + "'";
+
+// ---------- state ----------
+const state = {
+  view: "latest", runs: [], run: null, scenarios: [], job: { running: false }, loaded: false, error: null,
+  sig: "", polling: false, consoleOpen: false, status: "all", file: null, q: "",
+};
+
+async function api(path) {
+  const res = await fetch(path);
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error || `${path}: ${res.status}`);
+  return body;
+}
+async function post(path, body) {
+  const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}) });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `${path}: ${res.status}`);
+  return data;
+}
+
+let toastTimer;
+function toast(msg, bad) {
+  const t = $("toast");
+  t.textContent = msg; t.className = bad ? "bad" : ""; t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 4500);
+}
+
+// ---------- data ----------
+// One shape for both views: a scenario with its result (t) or none.
+function items() {
+  if (state.view === "latest")
+    return state.scenarios.map((s) => ({ id: s.id, file: s.file, test: s.test, param: s.param, t: s.latest, lastReal: s.last_real, outcome: s.latest ? s.latest.outcome : "notrun" }));
+  return (state.run ? state.run.tests : []).map((t) => ({ id: t.id, file: t.file, test: t.test, param: t.param, t, lastReal: null, outcome: t.outcome }));
+}
+const metricsOf = (it) => (it.t ? it.t.calls.flatMap((c) => c.metrics) : []);
+const titleOf = (it) => it.param || testLabel(it.test);
+const pendingSet = () => new Set(state.job.running ? state.job.pending || [] : []);
+
+async function poll(force) {
+  if (state.polling || (document.hidden && !force)) return;
+  state.polling = true;
+  try {
+    const [runs, job] = await Promise.all([api("/api/runs"), api("/api/job")]);
+    const was = state.job.running;
+    state.runs = runs; state.job = job;
+    if (was && !job.running) toast(job.exit_code === 0 || job.exit_code === 1 ? "Run finished." : "Run stopped.");
+    if (state.view !== "latest" && !runs.some((r) => r.id === state.view)) state.view = "latest";
+    const sig = JSON.stringify([state.view, runs.map((r) => [r.id, r.total, r.status]), job.running, (job.pending || []).length, job.exit_code]);
+    fillSelect(); syncControls(); renderJob();
+    if (sig === state.sig && !force && state.loaded) return;
+    state.sig = sig;
+    await loadView();
+  } catch (e) { state.error = e.message; state.loaded = true; render(); }
+  finally { state.polling = false; }
+}
+
+async function loadView() {
+  try {
+    if (state.view === "latest") state.scenarios = await api("/api/scenarios");
+    else state.run = await api(`/api/runs/${state.view}`);
+    state.error = null;
+  } catch (e) { state.error = e.message; }
+  state.loaded = true;
+  history.replaceState(null, "", "#" + state.view);
+  render();
+}
+
+// ---------- header + job bar ----------
+function fillSelect() {
+  const sel = $("viewSelect");
+  sel.replaceChildren(
+    h("option", { value: "latest" }, "Latest result of every scenario"),
+    ...state.runs.map((r) => h("option", { value: r.id }, `Run · ${fmtDate(r.started)} · ${r.counts.passed}/${r.total} passed` + (r.status === "running" ? " · running" : ""))));
+  sel.value = state.view;
+  $("reportLink").href = "/report?run=" + (state.view === "latest" ? "latest" : state.view);
+}
+
+function syncControls() {
+  const j = state.job, all = state.scenarios.length;
+  const runAll = $("runAll");
+  runAll.replaceChildren(icon("play"), j.running ? "Running…" : "Run all" + (all ? ` (${all})` : ""));
+  runAll.disabled = !!j.running;
+  const stop = $("stopBtn");
+  stop.hidden = !j.running;
+  stop.replaceChildren(icon("stop"), j.stopping ? "Force stop" : "Stop");
+}
+
+function renderJob() {
+  const j = state.job, bar = $("jobbar");
+  // pytest exits 0 (all passed), 1 (some failed) or 2 (interrupted, e.g. Stop). 3+ means it could not run properly.
+  const failedStart = !j.running && j.exit_code != null && j.exit_code >= 3;
+  if (!j.running && !failedStart) { bar.replaceChildren(); return; }
+  const done = j.count - (j.pending || []).length;
+  const log = h("details", { open: state.consoleOpen || failedStart, ontoggle: (e) => { state.consoleOpen = e.target.open; } },
+    h("summary", null, "Console output"), h("pre", null, j.log || "(no output yet)"));
+  bar.replaceChildren(h("section", null, h("div", { class: "card jobbar" },
+    j.running
+      ? [h("div", { class: "row" },
+          h("span", { class: "live" }, h("span", { class: "dot" }), j.stopping ? "Stopping… saving results so far" : `Running ${j.all ? "all scenarios" : j.count === 1 ? "1 scenario" : j.count + " scenarios"} · ${done} of ${j.count} done`),
+          h("div", { class: "track", role: "progressbar", "aria-valuemin": 0, "aria-valuemax": j.count, "aria-valuenow": done },
+            h("div", { class: "fill", style: `width:${j.count ? (done / j.count) * 100 : 0}%` }))), log]
+      : [h("div", { class: "row" }, h("span", { class: "badge st-error" }, icon("error"), h("span", null, `The run stopped with exit code ${j.exit_code} before finishing. Console output below.`))), log])));
+}
+
+// ---------- running things ----------
+async function runIds(ids, what) {
+  if (ids.length > 10 && !confirm(`Run ${ids.length} scenarios${what ? " in " + what : ""}?\n\nEach one calls Groq for the bot and the judge, so this can take a while on the free tier.`)) return;
+  try {
+    state.job = await post("/api/run", { ids });
+    toast(ids.length === 1 ? "Started 1 scenario." : `Started ${ids.length} scenarios.`);
+    await poll(true);
+  } catch (e) { toast(e.message, true); }
+}
+async function runAll() {
+  const n = state.scenarios.length || "all";
+  if (!confirm(`Run all ${n} scenarios?\n\nOn Groq's free tier this can take an hour or more. Rate-limited tests are retried automatically.`)) return;
+  try {
+    state.job = await post("/api/run", { all: true });
+    toast("Started the full run.");
+    await poll(true);
+  } catch (e) { toast(e.message, true); }
+}
+async function stopRun() {
+  try { await post("/api/stop"); toast(state.job.stopping ? "Force-stopping…" : "Stopping. Results so far are saved."); await poll(true); }
+  catch (e) { toast(e.message, true); }
+}
+
+// ---------- tooltip ----------
+const tip = $("tip");
+function showTip(el, lines, x, y) {
+  tip.replaceChildren(...lines); tip.style.display = "block";
+  const r = el.getBoundingClientRect(), px = x ?? r.left + r.width / 2, py = y ?? r.top;
+  tip.style.left = Math.min(px + 12, innerWidth - tip.offsetWidth - 8) + "px";
+  tip.style.top = Math.max(8, py - tip.offsetHeight - 10) + "px";
+}
+const hideTip = () => { tip.style.display = "none"; };
+
+// ---------- components ----------
+function tile(label, value, sub, outcome) {
+  return h("div", { class: "card tile" }, h("div", { class: "label" }, outcome && icon(outcome, `st-${outcome}`), label),
+    h("div", { class: "value" }, value), sub && h("div", { class: "sub" }, sub));
+}
+
+function meter(m) {
+  const has = typeof m.score === "number", thr = typeof m.threshold === "number" ? m.threshold : null;
+  return h("div", { class: "meter", role: "img", "aria-label": `${m.name}: score ${fmtScore(m.score)}, threshold ${fmtScore(thr)}` },
+    h("div", { class: "track" },
+      has && h("div", { class: "fill" + (m.success === false || m.error ? " bad" : ""), style: `width:${Math.max(0, Math.min(1, m.score)) * 100}%` }),
+      thr != null && h("div", { class: "tick", style: `left:${thr * 100}%` })));
+}
+
+function runButton(ids, label, title) {
+  return h("button", { class: "btn sm", type: "button", title: state.job.running ? "A run is already in progress" : title,
+      disabled: state.job.running, onclick: () => runIds(ids, label) }, icon("play"), "Run");
+}
+
+function card(it, pending) {
+  const ms = metricsOf(it), m = ms[0], queued = pending.has(it.id), running = queued && state.job.pending[0] === it.id;
+  const hint = errorHint(it.t), lr = it.lastReal;
+  let body;
+  if (m && typeof m.score === "number") {
+    body = [h("div", { class: "score" }, h("span", { class: "big num" }, fmtScore(m.score)), h("span", { class: "muted num" }, `/ ${fmtScore(m.threshold)} to pass`)),
+      meter(m), h("div", { class: "mname" }, m.name.replace(/\s*\[(?:Conversational )?GEval\]/, "") + (ms.length > 1 ? ` · +${ms.length - 1} more` : ""))];
+  } else {
+    body = [h("div", { class: "score" }, h("span", { class: "big num muted" }, "–"), h("span", { class: "muted" }, "no score")),
+      h("div", { class: "note" }, it.outcome === "notrun" ? "Not run yet." : hint || (it.outcome === "skipped" ? "Skipped." : "No score recorded.")),
+      lr && h("div", { class: "note" }, `Last verdict: ${OUTCOMES[lr.outcome]} · ${fmtScore(lr.score)}`)];
+  }
+  const when = state.view === "latest" ? (it.t ? `Last run ${fmtDate(it.t.when)}` : "Never run") : `${fmtDur(it.t.duration)}`;
+  return h("article", { class: `card sc ${it.outcome}` },
+    h("div", { class: "sc-top" }, badge(it.outcome),
+      queued && h("span", { class: "tag" }, running ? h("span", { class: "dot" }) : null, running ? "Running…" : "Queued"),
+      h("span", { class: "grow" }), runButton([it.id], "", "Run this scenario")),
+    h("h3", { class: "sc-title", title: titleOf(it) }, titleOf(it)),
+    h("div", null, body),
+    h("div", { class: "sc-foot" }, h("span", { class: "muted" }, when),
+      h("button", { class: "btn sm", type: "button", onclick: () => openDetail(it) }, "Details")));
+}
+
+function breakdown(all) {
+  const byFile = new Map();
+  for (const it of all) {
+    if (!byFile.has(it.file)) byFile.set(it.file, { passed: 0, failed: 0, error: 0, skipped: 0, notrun: 0, total: 0, ids: [] });
+    const c = byFile.get(it.file); c[it.outcome]++; c.total++; c.ids.push(it.id);
+  }
+  const rows = [...byFile].sort().map(([file, c]) => {
+    const stack = h("div", { class: "stack" }, Object.keys(OUTCOMES).filter((k) => c[k]).map((k) =>
+      h("div", { class: `seg ${k}`, style: `flex:${c[k]} 1 0`, tabindex: 0, "aria-label": `${fileLabel(file)}: ${c[k]} ${OUTCOMES[k].toLowerCase()}`,
+        onpointermove: (e) => showTip(e.target, [h("b", null, `${c[k]} ${OUTCOMES[k].toLowerCase()}`), h("div", { class: "muted" }, fileLabel(file))], e.clientX, e.clientY),
+        onpointerleave: hideTip, onblur: hideTip,
+        onfocus: (e) => showTip(e.target, [h("b", null, `${c[k]} ${OUTCOMES[k].toLowerCase()}`), h("div", { class: "muted" }, fileLabel(file))]) })));
+    return h("div", { class: "bar-row" + (state.file === file ? " sel" : "") },
+      h("button", { class: "bar-main", type: "button", "aria-pressed": String(state.file === file), title: "Filter to this area",
+          onclick: () => { state.file = state.file === file ? null : file; render(); } },
+        h("span", { class: "name" }, fileLabel(file)), stack, h("span", { class: "count num" }, `${c.passed}/${c.total} passed`)),
+      runButton(c.ids, fileLabel(file), `Run all ${c.total} scenarios in this area`));
+  });
+  return h("section", null, h("div", { class: "card" }, h("h2", null, "Results by area — select a row to filter, or run the whole area"),
+    h("div", { class: "bars" }, rows),
+    h("div", { class: "legend" }, Object.entries(OUTCOMES).filter(([k]) => k !== "skipped" || all.some((i) => i.outcome === "skipped")).map(([k, label]) =>
+      h("span", { class: "key" }, h("span", { class: "sw", style: `background:var(--${VAR[k]})` }), label)))));
+}
+
+function grid(all, pending) {
+  const q = state.q.trim().toLowerCase();
+  const shown = all.filter((it) => (state.status === "all" || it.outcome === state.status) && (!state.file || it.file === state.file)
+    && (!q || JSON.stringify([it.test, it.param, it.file, it.t && it.t.calls, it.t && it.t.message]).toLowerCase().includes(q)));
+  if (!shown.length) return h("div", { class: "card empty" }, "No scenarios match these filters.");
+  const byFile = new Map();
+  for (const it of shown) { if (!byFile.has(it.file)) byFile.set(it.file, []); byFile.get(it.file).push(it); }
+  return h("div", null, [...byFile].sort().map(([file, list]) => {
+    const total = all.filter((i) => i.file === file);
+    const done = total.filter((i) => i.outcome === "passed").length;
+    return h("div", { class: "area" },
+      h("div", { class: "area-head" }, h("h3", null, fileLabel(file)),
+        h("span", { class: "muted" }, `${list.length === total.length ? total.length : `${list.length} of ${total.length}`} scenarios · ${done} passed`),
+        runButton(total.map((i) => i.id), fileLabel(file), `Run all ${total.length} scenarios in this area`)),
+      h("div", { class: "grid" }, list.map((it) => card(it, pending))));
+  }));
+}
+
+// ---------- details dialog ----------
+function field(k, v, list) {
+  if (v == null || v === "" || (Array.isArray(v) && !v.length)) return null;
+  return h("div", { class: "field" }, h("div", { class: "k" }, k), list ? h("ul", null, v.map((x) => h("li", null, x))) : h("div", { class: "v" }, v));
+}
+
+function detailBody(it) {
+  const t = it.t, parts = [];
+  if (!t) return [h("p", { class: "muted", style: "margin-top:16px" }, "This scenario has not been run yet. Press Run to score it.")];
+  if (t.outcome === "error") {
+    parts.push(h("div", { class: "errbox" }, h("b", null, errorHint(t) + ". "),
+      "This is not a verdict on the bot: the judge never returned a score. Wait a minute, then press Run again."));
+    if (it.lastReal) parts.push(h("p", { class: "muted" }, `Last real verdict: ${OUTCOMES[it.lastReal.outcome]} · ${fmtScore(it.lastReal.score)} (${fmtDate(it.lastReal.when)}).`));
+  }
+  for (const call of t.calls) {
+    const c = call.case || {};
+    if (c.kind === "conversation") {
+      parts.push(h("div", { class: "field", style: "margin-top:12px" }, h("div", { class: "k" }, "Conversation"),
+        c.turns.map((x) => h("div", { class: "turn" }, h("div", { class: "who" }, x.role === "user" ? "Customer" : "Bot"), h("div", { class: "v" }, x.content)))));
+    } else if (c.kind === "single") {
+      parts.push(h("div", { class: "grid2" }, field("Input", c.input), field("Bot reply", c.actual_output), field("Expected output", c.expected_output),
+        field("Context (ground truth)", c.context, true), field("Retrieval context", c.retrieval_context, true)));
+    }
+    for (const m of call.metrics) {
+      const bigmeter = h("div", { class: "meter-big" }, h("div", { class: "cap num" }, `${fmtScore(m.score)} / ${fmtScore(m.threshold)}`), meter(m));
+      parts.push(h("div", { class: "metric" },
+        h("div", { class: "mh" }, h("b", null, m.name), m.error ? badge("error") : badge(m.success ? "passed" : "failed")),
+        bigmeter, m.reason && h("p", { class: "reason" }, m.reason), m.error && h("div", { class: "errbox" }, m.error),
+        h("div", { class: "muted", style: "font-size:12px;margin-top:8px" }, `Judge: ${m.judge || "–"}`),
+        m.logs && h("details", null, h("summary", null, "Judge logs"), h("pre", null, m.logs))));
+    }
+  }
+  if (t.message) parts.push(h("details", { open: t.outcome === "error" }, h("summary", null, "Failure message"), h("pre", null, t.message)));
+  return parts;
+}
+
+function openDetail(it) {
+  const dlg = $("dlg");
+  const src = it.t && it.t.when ? ` · last run ${fmtDate(it.t.when)}` : "";
+  dlg.replaceChildren(
+    h("div", { class: "dlg-head" }, badge(it.outcome), h("h2", null, titleOf(it)),
+      h("span", { class: "muted", style: "font-size:12px" }, fileLabel(it.file) + src),
+      h("button", { class: "btn sm", type: "button", disabled: state.job.running, title: state.job.running ? "A run is already in progress" : "Run this scenario",
+          onclick: () => { dlg.close(); runIds([it.id]); } }, icon("play"), "Run"),
+      h("button", { class: "btn sm", type: "button", "aria-label": "Close", onclick: () => dlg.close() }, icon("failed"))),
+    h("div", { class: "dlg-body" }, detailBody(it),
+      h("p", { class: "muted", style: "font-size:12px;margin-top:16px" }, "Scenario id: ", h("code", null, it.id))));
+  dlg.showModal();
+}
+$("dlg").addEventListener("click", (e) => { if (e.target === $("dlg")) $("dlg").close(); });  // click on the backdrop
+
+// ---------- page ----------
+function render() {
+  // Polling re-renders while someone may be typing in the search box, so keep its focus and caret.
+  const active = document.activeElement;
+  const typing = active && active.matches && active.matches('input[type="search"]');
+  const caret = typing ? active.selectionStart : 0;
+  build();
+  if (typing) { const box = document.querySelector('input[type="search"]'); if (box) { box.focus(); box.setSelectionRange(caret, caret); } }
+  syncControls();
+}
+
+function build() {
+  const app = $("app");
+  if (!state.loaded) { app.replaceChildren(h("div", { class: "card empty" }, "Loading scenarios… (the first load collects the test list, which takes a few seconds)")); return; }
+  if (state.error) { app.replaceChildren(h("div", { class: "card empty" }, h("p", null, "Could not load results."), h("pre", null, state.error))); return; }
+
+  const all = items(), pending = state.view === "latest" ? pendingSet() : new Set();
+  if (!all.length) { app.replaceChildren(h("div", { class: "card empty" }, "No scenarios found in this view.")); return; }
+  const c = { passed: 0, failed: 0, error: 0, skipped: 0, notrun: 0 };
+  for (const it of all) c[it.outcome]++;
+  const scored = c.passed + c.failed, rate = scored ? c.passed / scored : 0;
+
+  const newest = state.runs[0];
+  const meta = state.view === "latest"
+    ? [`${all.length} scenarios · ${scored} scored`, newest ? [" · judge ", h("code", null, newest.judge_model), " · bot ", h("code", null, newest.bot_model)] : ""]
+    : [`${fmtDate(state.run.started)} · ${fmtDur(state.run.duration)} · judge `, h("code", null, state.run.judge_model), " · bot ", h("code", null, state.run.bot_model)];
+  $("meta").replaceChildren(...[meta].flat(2).filter(Boolean));
+
+  const chips = ["all", ...Object.keys(OUTCOMES).filter((k) => k !== "skipped" || c.skipped)].map((k) =>
+    h("button", { class: "chip", type: "button", "aria-pressed": String(state.status === k), onclick: () => { state.status = k; render(); } },
+      k === "all" ? "All" : OUTCOMES[k], h("span", { class: "n num" }, k === "all" ? all.length : c[k])));
+  const search = h("input", { type: "search", placeholder: "Search scenarios, replies, reasons…", value: state.q, "aria-label": "Search scenarios", oninput: (e) => { state.q = e.target.value; render(); } });
+
+  app.replaceChildren(
+    h("section", null, h("div", { class: "kpis" },
+      h("div", { class: "card tile hero" }, h("div", { class: "label" }, "Pass rate"), h("div", { class: "value" }, scored ? `${Math.round(rate * 100)}%` : "–"),
+        h("div", { class: "sub" }, `${c.passed} of ${scored} scored scenarios passed` + (c.error ? ` · ${c.error} errored, not scored` : ""))),
+      tile("Passed", c.passed, null, "passed"), tile("Failed", c.failed, "Score below threshold", "failed"),
+      tile("Errors", c.error, "Judge or API problem (for example a rate limit), not a verdict on the bot", "error"),
+      state.view === "latest" ? tile("Not run", c.notrun, "No result recorded yet", "notrun") : tile("Skipped", c.skipped, null, "skipped"))),
+    breakdown(all),
+    h("section", null, h("div", { class: "filters" }, h("div", { class: "chips" }, chips), search,
+      state.file && h("button", { class: "chip", type: "button", onclick: () => { state.file = null; render(); } }, `Area: ${fileLabel(state.file)}  ✕`)),
+      grid(all, pending)));
+}
+
+// ---------- boot ----------
+$("viewSelect").addEventListener("change", (e) => { state.view = e.target.value; state.status = "all"; state.file = null; state.q = ""; state.sig = ""; poll(true); });
+$("refresh").addEventListener("click", () => poll(true));
+$("runAll").addEventListener("click", runAll);
+$("stopBtn").addEventListener("click", stopRun);
+const hash = location.hash.slice(1); if (hash) state.view = hash;
+syncControls(); render();
+poll(true);
+setInterval(() => poll(), 3000);
+</script>
+</body>
+</html>

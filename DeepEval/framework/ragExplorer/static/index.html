@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>RAG Explorer</title>
+<link rel="icon" href="data:,">
+<style>
+  :root {
+    --bg: #f4f5f8;
+    --surface: #ffffff;
+    --surface-2: #f8f9fb;
+    --text: #1b2130;
+    --muted: #667085;
+    --border: #e2e5ec;
+    --accent: #3b5bdb;
+    --accent-hover: #3050c4;
+    --on-accent: #ffffff;
+    --code-bg: #eef0f5;
+    --error-bg: #fdecec;
+    --error-text: #a12626;
+    --warn-bg: #fff4e0;
+    --warn-text: #8a5300;
+    --hit-bg: #eef2ff;
+    --c0: #3b5bdb; --c1: #e8590c; --c2: #2f9e44; --c3: #ae3ec9; --c4: #0c8599; --c5: #c92a2a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1116;
+      --surface: #161a22;
+      --surface-2: #1b202a;
+      --text: #e7eaf1;
+      --muted: #98a2b3;
+      --border: #2a303c;
+      --accent: #7f97ff;
+      --accent-hover: #9aacff;
+      --on-accent: #0e1116;
+      --code-bg: #262c38;
+      --error-bg: #3a1c1f;
+      --error-text: #ffb4b4;
+      --warn-bg: #3a2c12;
+      --warn-text: #ffd28a;
+      --hit-bg: #1d2440;
+      --c0: #7f97ff; --c1: #ff922b; --c2: #51cf66; --c3: #da77f2; --c4: #3bc9db; --c5: #ff8787;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .hidden { display: none !important; }
+  button, input, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  header {
+    padding: 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  header h1 { margin: 0; font-size: 18px; font-weight: 650; }
+  header p { margin: 2px 0 0; font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    gap: 16px;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 16px;
+    align-items: start;
+  }
+  aside, main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  @media (max-width: 860px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .card h2 {
+    margin: 0 0 10px;
+    font-size: 13px;
+    font-weight: 650;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+  }
+  .hint { margin: 6px 0 0; font-size: 12px; color: var(--muted); }
+
+  /* ---- settings ---- */
+  .field { display: block; margin-bottom: 12px; }
+  .field:last-child { margin-bottom: 0; }
+  .field > .label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+  .field output { color: var(--muted); font-variant-numeric: tabular-nums; }
+  select, input[type="text"] {
+    width: 100%;
+    padding: 8px 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  input[type="range"] { width: 100%; margin: 0; accent-color: var(--accent); }
+  fieldset { border: 0; padding: 0; margin: 0 0 12px; }
+  legend { font-size: 13px; padding: 0; margin-bottom: 4px; }
+  .seg { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .seg label { position: relative; flex: 1; text-align: center; font-size: 13px; padding: 6px 4px; cursor: pointer; }
+  .seg label + label { border-left: 1px solid var(--border); }
+  .seg input { position: absolute; opacity: 0; pointer-events: none; }
+  .seg label:has(input:checked) { background: var(--accent); color: var(--on-accent); }
+  .seg label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .stats { margin: 10px 0 0; font-size: 12px; color: var(--muted); }
+
+  /* ---- documents ---- */
+  .docs { list-style: none; margin: 0; padding: 0; }
+  .doc {
+    display: flex; align-items: center; gap: 8px; width: 100%;
+    background: none; border: 1px solid transparent; border-radius: 8px;
+    padding: 5px 8px; text-align: left; font-size: 13px;
+  }
+  .doc:hover { background: var(--surface-2); }
+  .doc[aria-pressed="true"] { border-color: var(--accent); background: var(--surface-2); }
+  .doc .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .doc .count { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; background: var(--muted); }
+
+  /* ---- map ---- */
+  #map { width: 100%; height: auto; display: block; background: var(--surface-2); border-radius: 8px; }
+  #map .pt { cursor: pointer; }
+  #map .rank { font-size: 9px; font-weight: 700; fill: var(--text); pointer-events: none; }
+
+  /* ---- query ---- */
+  .qrow { display: flex; gap: 8px; flex-wrap: wrap; }
+  .qrow input { flex: 1 1 260px; }
+  .btn {
+    border: 1px solid var(--border); background: var(--surface); border-radius: 8px;
+    padding: 8px 14px; white-space: nowrap;
+  }
+  .btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .btn.primary:hover:not(:disabled) { background: var(--accent-hover); color: var(--on-accent); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .chip {
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px;
+    padding: 3px 10px; font-size: 12.5px;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  #status { margin: 10px 0 0; font-size: 13px; color: var(--muted); min-height: 1.2em; }
+
+  .banner { border-radius: 8px; padding: 8px 12px; font-size: 13px; margin-top: 10px; }
+  .banner.error { background: var(--error-bg); color: var(--error-text); }
+  .banner.warn { background: var(--warn-bg); color: var(--warn-text); }
+
+  /* ---- answer ---- */
+  .answer p { margin: 0 0 8px; }
+  .answer ul, .answer ol { margin: 0 0 8px; padding-left: 22px; }
+  .answer > :last-child { margin-bottom: 0; }
+  .answer code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; font: 0.92em ui-monospace, Menlo, monospace; }
+  .cite {
+    border: 1px solid var(--accent); background: none; color: var(--accent);
+    border-radius: 6px; font-size: 11px; font-weight: 700; line-height: 1;
+    padding: 2px 5px; margin: 0 1px; vertical-align: 1px;
+  }
+  .cite:hover { background: var(--accent); color: var(--on-accent); }
+  .meta { margin: 10px 0 0; font-size: 12px; color: var(--muted); }
+  details.prompt { margin-top: 10px; }
+  details summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+  .prompt .role { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); margin: 10px 0 4px; }
+
+  /* ---- chunk cards ---- */
+  pre.text {
+    margin: 0; white-space: pre-wrap; overflow-wrap: anywhere;
+    font: 12.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px;
+  }
+  .chunk { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-top: 10px; }
+  .chunk.hit { background: var(--hit-bg); border-color: var(--accent); }
+  .chunk.flash { animation: flash 1.2s ease-out; }
+  @keyframes flash { from { box-shadow: 0 0 0 4px var(--accent); } to { box-shadow: 0 0 0 0 transparent; } }
+  .chead { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; flex-wrap: wrap; }
+  .rank-badge {
+    background: var(--accent); color: var(--on-accent); font-weight: 700; font-size: 12px;
+    min-width: 22px; height: 22px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center; padding: 0 6px;
+  }
+  .ctitle { font-weight: 600; flex: 1 1 200px; overflow-wrap: anywhere; }
+  .ctitle small { display: block; font-weight: 400; color: var(--muted); }
+  .cmeta { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .bar { height: 6px; background: var(--code-bg); border-radius: 3px; overflow: hidden; margin: 0 0 8px; }
+  .bar > i { display: block; height: 100%; background: var(--accent); }
+  .scores { font-size: 12px; color: var(--muted); margin: 0 0 8px; font-variant-numeric: tabular-nums; }
+  .scores b { color: var(--text); font-weight: 600; }
+  #all-list { max-height: 560px; overflow-y: auto; padding-right: 4px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>RAG Explorer</h1>
+  <p id="meta">Loading…</p>
+</header>
+
+<div class="layout">
+  <aside>
+    <section class="card" aria-labelledby="h-settings">
+      <h2 id="h-settings">Settings</h2>
+
+      <label class="field">
+        <span class="label">Chunking strategy</span>
+        <select id="strategy">
+          <option value="section">section: split at markdown headings</option>
+          <option value="fixed">fixed: sliding window over the file</option>
+        </select>
+      </label>
+      <label class="field">
+        <span class="label">Chunk size <output id="size-out"></output></span>
+        <input id="chunk_size" type="range" min="100" max="2500" step="50" value="500">
+      </label>
+      <label class="field">
+        <span class="label">Overlap <output id="overlap-out"></output></span>
+        <input id="overlap" type="range" min="0" max="250" step="10" value="50">
+        <span class="hint">Characters shared with the previous chunk. In section mode it only applies to sections longer than the chunk size.</span>
+      </label>
+
+      <fieldset>
+        <legend>Retrieval mode</legend>
+        <div class="seg" id="mode">
+          <label title="Cosine similarity of MiniLM embeddings"><input type="radio" name="mode" value="semantic">semantic</label>
+          <label title="BM25 term matching"><input type="radio" name="mode" value="keyword">keyword</label>
+          <label title="Reciprocal-rank fusion of both rankings"><input type="radio" name="mode" value="hybrid" checked>hybrid</label>
+        </div>
+      </fieldset>
+      <label class="field">
+        <span class="label">Top-k <output id="topk-out"></output></span>
+        <input id="top_k" type="range" min="1" max="10" step="1" value="4">
+      </label>
+      <p class="stats" id="stats" aria-live="polite"></p>
+    </section>
+
+    <section class="card" aria-labelledby="h-docs">
+      <h2 id="h-docs">Documents</h2>
+      <ul class="docs" id="docs"></ul>
+    </section>
+
+    <section class="card" aria-labelledby="h-map">
+      <h2 id="h-map">Chunk map</h2>
+      <svg id="map" viewBox="0 0 300 240" role="img" aria-label="2-D projection of chunk embeddings"></svg>
+      <p class="hint">2-D PCA of the embeddings; distances are approximate. Colour = document, ◆ = your query, ringed dots = retrieved.</p>
+    </section>
+  </aside>
+
+  <main>
+    <section class="card" aria-labelledby="h-query">
+      <h2 id="h-query">Ask the documents</h2>
+      <form id="form" class="qrow">
+        <input id="query" type="text" maxlength="1000" placeholder="Ask something about the documents…" aria-label="Question" autocomplete="off">
+        <button class="btn" id="retrieve" type="button">Retrieve</button>
+        <button class="btn primary" id="answer-btn" type="submit">Retrieve &amp; answer</button>
+      </form>
+      <div class="chips" id="chips"></div>
+      <p id="status" aria-live="polite"></p>
+      <div id="banner" class="banner hidden" role="alert"></div>
+    </section>
+
+    <section class="card hidden" id="answer-card" aria-labelledby="h-answer">
+      <h2 id="h-answer">Answer</h2>
+      <div class="answer" id="answer"></div>
+      <p class="meta" id="answer-meta"></p>
+      <details class="prompt">
+        <summary>Prompt sent to the LLM</summary>
+        <div id="prompt"></div>
+      </details>
+    </section>
+
+    <section class="card hidden" id="results-card" aria-labelledby="h-results">
+      <h2 id="h-results">Retrieved chunks</h2>
+      <p class="meta" id="results-meta" style="margin: -4px 0 0"></p>
+      <div id="results"></div>
+    </section>
+
+    <section class="card" aria-labelledby="h-all">
+      <details id="all">
+        <summary><span id="h-all">All chunks</span> <span id="all-count"></span></summary>
+        <div id="all-list"></div>
+      </details>
+    </section>
+  </main>
+</div>
+
+<script>
+  // Sample questions for the bundled ShopSphere data (the last one is deliberately out of scope).
+  const EXAMPLES = [
+    "How long do refunds take?",
+    "Can I return earbuds?",
+    "What is the price of the desk lamp?",
+    "Do you ship to Cuba?",
+    "What's the capital of France?",
+  ];
+  const WEAK_COSINE = 0.25; // MiniLM cosine below this is usually an unrelated chunk
+
+  const $ = (id) => document.getElementById(id);
+  const ctl = {
+    strategy: $("strategy"),
+    chunk_size: $("chunk_size"),
+    overlap: $("overlap"),
+    top_k: $("top_k"),
+  };
+  const modeInputs = document.querySelectorAll('input[name="mode"]');
+
+  let corpus = null;      // last /api/corpus response
+  let corpusKey = "";     // chunking settings the corpus was built with
+  let docIndex = {};      // doc path -> colour index
+  let docFilter = null;   // doc path shown in "All chunks", or null
+  let last = null;        // last query result (+ the query text)
+  let corpusSeq = 0;
+  let corpusLoading = false;
+  let running = false;
+
+  // ---- helpers ------------------------------------------------------------------------
+  const mode = () => [...modeInputs].find((r) => r.checked).value;
+  const settings = () => ({
+    strategy: ctl.strategy.value,
+    chunk_size: +ctl.chunk_size.value,
+    overlap: +ctl.overlap.value,
+    mode: mode(),
+    top_k: +ctl.top_k.value,
+  });
+  const keyOf = (s) => `${s.strategy}|${s.chunk_size}|${s.overlap}`;
+  const colour = (doc) => `var(--c${(docIndex[doc] ?? 0) % 6})`;
+  const tokens = (s) => Math.round(s.length / 4); // rough rule of thumb: ~4 chars per token
+
+  function el(tag, props = {}, ...children) {
+    const node = document.createElement(tag);
+    for (const [k, v] of Object.entries(props)) {
+      if (k === "class") node.className = v;
+      else if (k === "text") node.textContent = v;
+      else node.setAttribute(k, v);
+    }
+    node.append(...children);
+    return node;
+  }
+
+  function svg(tag, attrs = {}, title) {
+    const node = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+    if (title) node.appendChild(document.createElementNS("http://www.w3.org/2000/svg", "title")).textContent = title;
+    return node;
+  }
+
+  async function api(path, body) {
+    const res = await fetch(path, body
+      ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
+      : undefined);
+    let data = {};
+    try { data = await res.json(); } catch { /* non-JSON error page */ }
+    if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+    return data;
+  }
+
+  function showBanner(kind, text) {
+    const b = $("banner");
+    b.className = "banner " + kind;
+    b.textContent = text;
+  }
+  const clearBanner = () => $("banner").classList.add("hidden");
+
+  function updateButtons() {
+    const busy = corpusLoading || running;
+    const hasQuery = $("query").value.trim().length > 0;
+    $("retrieve").disabled = busy || !hasQuery;
+    $("answer-btn").disabled = busy || !hasQuery || !(corpus && corpus.llm.configured);
+    $("answer-btn").title = corpus && !corpus.llm.configured ? "GROQ_API_KEY is not set (see .env.example)" : "";
+  }
+
+  // ---- tiny markdown renderer (same approach as the Chatbot: escape everything first) --
+  function escapeHtml(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function inline(s) {
+    return escapeHtml(s)
+      .replace(/`([^`]+)`/g, "<code>$1</code>")
+      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  }
+  function renderMarkdown(text) {
+    const out = [];
+    let list = null;
+    let para = [];
+    const flushPara = () => { if (para.length) out.push("<p>" + para.map(inline).join("<br>") + "</p>"); para = []; };
+    const flushList = () => {
+      if (list) out.push(`<${list.tag}>` + list.items.map((i) => `<li>${inline(i)}</li>`).join("") + `</${list.tag}>`);
+      list = null;
+    };
+    for (const raw of text.split("\n")) {
+      const line = raw.trimEnd();
+      const bullet = line.match(/^\s*[-*•]\s+(.*)$/);
+      const numbered = line.match(/^\s*\d+[.)]\s+(.*)$/);
+      if (bullet || numbered) {
+        flushPara();
+        const tag = bullet ? "ul" : "ol";
+        if (list && list.tag !== tag) flushList();
+        if (!list) list = { tag, items: [] };
+        list.items.push((bullet || numbered)[1]);
+      } else if (!line.trim()) { flushPara(); flushList(); }
+      else { flushList(); para.push(line); }
+    }
+    flushPara(); flushList();
+    return out.join("");
+  }
+
+  // ---- corpus -------------------------------------------------------------------------
+  async function loadCorpus() {
+    const s = settings();
+    const seq = ++corpusSeq;
+    corpusLoading = true;
+    updateButtons();
+    $("stats").textContent = "Re-chunking and embedding…";
+    try {
+      const params = new URLSearchParams({ strategy: s.strategy, chunk_size: s.chunk_size, overlap: s.overlap });
+      const data = await api("/api/corpus?" + params);
+      if (seq !== corpusSeq) return; // a newer change superseded this one
+      corpus = data;
+      corpusKey = keyOf(s);
+      docIndex = Object.fromEntries(data.docs.map((d, i) => [d.path, i]));
+      if (docFilter && !(docFilter in docIndex)) docFilter = null;
+      last = null; // chunk ids changed, so old hits no longer point at the right chunks
+      $("answer-card").classList.add("hidden");
+      $("results-card").classList.add("hidden");
+      renderMeta();
+      renderStats();
+      renderDocs();
+      renderAll();
+      drawMap();
+      clearBanner();
+    } catch (e) {
+      if (seq === corpusSeq) showBanner("error", e.message);
+    } finally {
+      if (seq === corpusSeq) { corpusLoading = false; updateButtons(); }
+    }
+  }
+
+  function renderMeta() {
+    $("meta").textContent =
+      `${corpus.docs.length} documents in ${corpus.data_dir} · embeddings: ${corpus.embedding.model} ` +
+      `(${corpus.embedding.dim}-d, local) · LLM: ${corpus.llm.model} via Groq` +
+      (corpus.llm.configured ? "" : " (no API key: retrieval only)");
+  }
+
+  function renderStats() {
+    const lens = corpus.chunks.map((c) => c.text.length);
+    const avg = Math.round(lens.reduce((a, b) => a + b, 0) / lens.length);
+    $("stats").textContent =
+      `${lens.length} chunks · avg ${avg} chars (~${Math.round(avg / 4)} tokens) · ` +
+      `min ${Math.min(...lens)} / max ${Math.max(...lens)}`;
+  }
+
+  function renderDocs() {
+    const list = $("docs");
+    list.replaceChildren();
+    const add = (path, label, count, dotColour) => {
+      const b = el("button", { class: "doc", type: "button", "aria-pressed": String(docFilter === path) },
+        el("span", { class: "dot", style: `background:${dotColour}` }),
+        el("span", { class: "name", text: label, title: label }),
+        el("span", { class: "count", text: String(count) }));
+      b.addEventListener("click", () => {
+        docFilter = docFilter === path ? null : path;
+        $("all").open = true;
+        renderDocs();
+        renderAll();
+      });
+      list.appendChild(el("li", {}, b));
+    };
+    for (const d of corpus.docs) add(d.path, d.path, d.chunks, colour(d.path));
+  }
+
+  function chunkCard(c, hit) {
+    const size = `${c.text.length} chars · ~${tokens(c.text)} tokens`;
+    const title = el("div", { class: "ctitle" }, c.doc, el("small", { text: c.heading || "(no heading)" }));
+    const head = el("div", { class: "chead" }, el("span", { class: "dot", style: `background:${colour(c.doc)}` }));
+    if (hit) head.appendChild(el("span", { class: "rank-badge", text: "#" + hit.rank }));
+    head.append(title, el("span", { class: "cmeta", text: `chunk ${c.id} · ${size}` }));
+    return el("div", { class: "chunk" + (hit ? " hit" : ""), id: (hit ? "hit-" : "chunk-") + c.id }, head);
+  }
+
+  function renderAll() {
+    const hitIds = new Set(last ? last.hits.map((h) => h.id) : []);
+    const shown = corpus.chunks.filter((c) => !docFilter || c.doc === docFilter);
+    $("all-count").textContent = `(${shown.length}${docFilter ? " in " + docFilter : ""})`;
+    const list = $("all-list");
+    list.replaceChildren();
+    for (const c of shown) {
+      const card = chunkCard(c, null);
+      if (hitIds.has(c.id)) card.classList.add("hit");
+      card.appendChild(el("pre", { class: "text", text: c.text }));
+      list.appendChild(card);
+    }
+  }
+
+  function focusChunk(id) {
+    if (docFilter && corpus.chunks[id].doc !== docFilter) { docFilter = null; renderDocs(); }
+    $("all").open = true;
+    renderAll();
+    const card = $("chunk-" + id);
+    if (!card) return;
+    card.scrollIntoView({ block: "center", behavior: "smooth" });
+    card.classList.add("flash");
+    setTimeout(() => card.classList.remove("flash"), 1300);
+  }
+
+  // ---- chunk map ----------------------------------------------------------------------
+  function drawMap() {
+    const map = $("map");
+    map.replaceChildren();
+    const W = 300, H = 240, P = 18;
+    const pts = corpus.chunks.map((c) => [c.x, c.y]);
+    if (last) pts.push(last.query_xy);
+    const [x0, x1] = [Math.min(...pts.map((p) => p[0])), Math.max(...pts.map((p) => p[0]))];
+    const [y0, y1] = [Math.min(...pts.map((p) => p[1])), Math.max(...pts.map((p) => p[1]))];
+    const sx = (v) => P + (x1 === x0 ? 0.5 : (v - x0) / (x1 - x0)) * (W - 2 * P);
+    const sy = (v) => H - P - (y1 === y0 ? 0.5 : (v - y0) / (y1 - y0)) * (H - 2 * P);
+    const rankOf = new Map(last ? last.hits.map((h) => [h.id, h.rank]) : []);
+
+    if (last) { // dashed lines from the query to what it retrieved
+      const [qx, qy] = last.query_xy;
+      for (const h of last.hits) {
+        const c = corpus.chunks[h.id];
+        map.appendChild(svg("line", {
+          x1: sx(qx), y1: sy(qy), x2: sx(c.x), y2: sy(c.y),
+          stroke: "var(--muted)", "stroke-width": 1, "stroke-dasharray": "3 3", opacity: 0.6,
+        }));
+      }
+    }
+    for (const c of corpus.chunks) {
+      const rank = rankOf.get(c.id);
+      const dot = svg("circle", {
+        class: "pt", cx: sx(c.x), cy: sy(c.y), r: rank ? 6 : 4, fill: colour(c.doc),
+        opacity: last && !rank ? 0.35 : 0.9,
+        stroke: rank ? "var(--text)" : "none", "stroke-width": 1.5,
+      }, `${c.doc} > ${c.heading || "(no heading)"} (chunk ${c.id})`);
+      dot.addEventListener("click", () => focusChunk(c.id));
+      map.appendChild(dot);
+      if (rank) map.appendChild(svg("text", { class: "rank", x: sx(c.x) + 8, y: sy(c.y) - 6 })).textContent = rank;
+    }
+    if (last) {
+      const x = sx(last.query_xy[0]), y = sy(last.query_xy[1]);
+      map.appendChild(svg("polygon", {
+        points: `${x},${y - 8} ${x + 7},${y} ${x},${y + 8} ${x - 7},${y}`,
+        fill: "var(--text)", stroke: "var(--surface)", "stroke-width": 1.5,
+      }, "Your query"));
+    }
+  }
+
+  // ---- query --------------------------------------------------------------------------
+  async function run(generate) {
+    const query = $("query").value.trim();
+    if (!query || running || corpusLoading) return;
+    const s = settings();
+    const key = keyOf(s);
+    running = true;
+    updateButtons();
+    clearBanner();
+    $("status").textContent = generate ? "Retrieving and asking the LLM…" : "Retrieving…";
+    if (!generate) $("answer-card").classList.add("hidden");
+
+    try {
+      const data = await api("/api/query", { ...s, query, generate });
+      if (key !== corpusKey) return; // chunking changed while we waited; these hits are stale
+      last = { ...data, query, settings: s };
+      renderResults();
+      renderAll();
+      drawMap();
+      if (generate) renderAnswer(data);
+    } catch (e) {
+      showBanner("error", e.message);
+    } finally {
+      running = false;
+      $("status").textContent = "";
+      updateButtons();
+    }
+  }
+
+  function renderResults() {
+    const { hits, settings: s, query } = last;
+    $("results-card").classList.remove("hidden");
+    $("results-meta").textContent = `${hits.length} of ${corpus.chunks.length} chunks · ${s.mode} · ${last.retrieval_ms} ms`;
+    const box = $("results");
+    box.replaceChildren();
+
+    if (!hits.length) {
+      box.appendChild(el("p", { class: "hint", text: "No chunk shares a term with this query. Try semantic or hybrid mode." }));
+      return;
+    }
+    const maxScore = Math.max(...hits.map((h) => h.score)) || 1;
+    for (const h of hits) {
+      const c = corpus.chunks[h.id];
+      const card = chunkCard(c, h);
+      const width = s.mode === "semantic" ? Math.max(0, h.score) : h.score / maxScore;
+      card.append(
+        el("div", { class: "bar", role: "presentation" }, el("i", { style: `width:${(Math.min(1, width) * 100).toFixed(1)}%` })),
+      );
+      const scores = el("p", { class: "scores" });
+      scores.append("cosine ", el("b", { text: h.semantic.toFixed(3) }), " · BM25 ", el("b", { text: h.keyword.toFixed(2) }));
+      if (s.mode === "hybrid") scores.append(" · RRF ", el("b", { text: h.score.toFixed(4) }));
+      card.appendChild(scores);
+      if (s.mode !== "keyword" && h.semantic < WEAK_COSINE) {
+        card.appendChild(el("p", { class: "banner warn", text: "Weak semantic match: this chunk is probably unrelated to the question." }));
+      }
+      card.appendChild(el("pre", { class: "text", text: c.text }));
+      box.appendChild(card);
+    }
+  }
+
+  function renderAnswer(data) {
+    const card = $("answer-card");
+    card.classList.remove("hidden");
+    const answer = $("answer");
+    const hitCount = last.hits.length;
+
+    if (data.answer_error) {
+      answer.replaceChildren();
+      $("answer-meta").textContent = "";
+      $("prompt").replaceChildren();
+      showBanner("error", data.answer_error);
+      card.classList.add("hidden");
+      return;
+    }
+    // Model output is escaped by renderMarkdown; only our own <button> tags are added after.
+    // gpt-oss models often cite as 【1】 (full-width brackets), so accept both styles.
+    answer.innerHTML = renderMarkdown(data.answer).replace(/[[【](\d{1,2})[\]】]/g, (m, n) =>
+      +n >= 1 && +n <= hitCount ? `<button type="button" class="cite" data-n="${+n}" title="Show source ${+n}">${+n}</button>` : m);
+    const u = data.usage;
+    $("answer-meta").textContent =
+      `generation ${data.generation_ms} ms` + (u ? ` · ${u.prompt_tokens} prompt + ${u.completion_tokens} completion tokens` : "");
+    const prompt = $("prompt");
+    prompt.replaceChildren();
+    for (const m of data.prompt) {
+      prompt.append(el("div", { class: "role", text: m.role }), el("pre", { class: "text", text: m.content }));
+    }
+  }
+
+  $("answer").addEventListener("click", (e) => {
+    const btn = e.target.closest(".cite");
+    if (!btn) return;
+    const card = $("hit-" + last.hits[+btn.dataset.n - 1].id);
+    card.scrollIntoView({ block: "center", behavior: "smooth" });
+    card.classList.add("flash");
+    setTimeout(() => card.classList.remove("flash"), 1300);
+  });
+
+  // ---- wiring -------------------------------------------------------------------------
+  function syncOutputs() {
+    $("size-out").textContent = ctl.chunk_size.value + " chars";
+    // overlap above half the chunk size mostly duplicates text, so cap it (and the server needs overlap < size)
+    const max = Math.min(250, Math.floor(+ctl.chunk_size.value / 2 / 10) * 10);
+    ctl.overlap.max = max;
+    if (+ctl.overlap.value > max) ctl.overlap.value = max;
+    $("overlap-out").textContent = ctl.overlap.value + " chars";
+    $("topk-out").textContent = ctl.top_k.value;
+  }
+
+  let debounce;
+  for (const c of [ctl.strategy, ctl.chunk_size, ctl.overlap]) {
+    c.addEventListener("input", () => {
+      syncOutputs();
+      clearTimeout(debounce);
+      debounce = setTimeout(loadCorpus, 300);
+    });
+  }
+  // Retrieval settings don't need a re-index: just re-run retrieval (never the LLM) if there's a query.
+  const rerun = () => { syncOutputs(); if (last) run(false); };
+  ctl.top_k.addEventListener("input", rerun);
+  modeInputs.forEach((r) => r.addEventListener("change", rerun));
+
+  $("query").addEventListener("input", updateButtons);
+  $("retrieve").addEventListener("click", () => run(false));
+  $("form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    run(!$("answer-btn").disabled); // Enter answers when an API key is set, else just retrieves
+  });
+  for (const q of EXAMPLES) {
+    const b = el("button", { class: "chip", type: "button", text: q });
+    b.addEventListener("click", () => {
+      $("query").value = q;
+      updateButtons();
+      run(!$("answer-btn").disabled);
+    });
+    $("chips").appendChild(b);
+  }
+
+  syncOutputs();
+  loadCorpus();
+</script>
+</body>
+</html>
